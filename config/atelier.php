@@ -1,0 +1,123 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Locales
+    |--------------------------------------------------------------------------
+    |
+    | Define the locales available for content translation in Atelier.
+    | The first locale in the array will be treated as the default.
+    |
+    */
+    'locales' => [
+        'en' => 'English',
+        'fr' => 'Français',
+        // 'es' => 'Español',
+        // 'de' => 'Deutsch',
+    ],
+    
+    'default_locale' => 'en',
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Database Table Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Prefix for Atelier's database tables. Useful if you need to avoid
+    | naming conflicts with existing tables.
+    |
+    */
+    'table_prefix' => 'atelier_',
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Block Registration
+    |--------------------------------------------------------------------------
+    |
+    | Automatically discovered blocks will be registered here. You can also
+    | manually register custom blocks by adding them to this array.
+    |
+    */
+    'blocks' => [
+        // \App\Blocks\CustomBlock::class,
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Display Features
+    |--------------------------------------------------------------------------
+    |
+    | Configure global display options available to all blocks.
+    | These can be extended or modified per your design system.
+    |
+    */
+    'features' => [
+        'backgrounds' => [
+            'enabled' => true,
+            'options' => [
+                'white' => ['label' => 'White', 'class' => 'bg-white'],
+                'gray-50' => ['label' => 'Light Gray', 'class' => 'bg-gray-50'],
+                'gray-100' => ['label' => 'Gray', 'class' => 'bg-gray-100'],
+                'primary' => ['label' => 'Primary', 'class' => 'bg-primary-500 text-white'],
+                'secondary' => ['label' => 'Secondary', 'class' => 'bg-secondary-500 text-white'],
+            ],
+        ],
+        
+        'spacing' => [
+            'enabled' => true,
+            'options' => [
+                'none' => ['label' => 'None', 'class' => ''],
+                'xs' => ['label' => 'Extra Small', 'class' => 'py-4'],
+                'sm' => ['label' => 'Small', 'class' => 'py-8'],
+                'md' => ['label' => 'Medium', 'class' => 'py-16'],
+                'lg' => ['label' => 'Large', 'class' => 'py-24'],
+                'xl' => ['label' => 'Extra Large', 'class' => 'py-32'],
+            ],
+        ],
+        
+        'width' => [
+            'enabled' => true,
+            'options' => [
+                'container' => ['label' => 'Container', 'class' => 'container mx-auto px-4'],
+                'narrow' => ['label' => 'Narrow', 'class' => 'max-w-3xl mx-auto px-4'],
+                'wide' => ['label' => 'Wide', 'class' => 'max-w-7xl mx-auto px-4'],
+                'full' => ['label' => 'Full Width', 'class' => 'w-full px-4'],
+            ],
+        ],
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Media Library
+    |--------------------------------------------------------------------------
+    |
+    | Configure Spatie Media Library settings for block media.
+    |
+    */
+    'media' => [
+        'collections' => [
+            'default' => 'blocks',
+            'hero' => 'hero-backgrounds',
+        ],
+        'conversions' => [
+            'thumb' => ['width' => 350, 'height' => 350],
+            'medium' => ['width' => 800, 'height' => 600],
+            'large' => ['width' => 1920, 'height' => 1080],
+        ],
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Caching
+    |--------------------------------------------------------------------------
+    |
+    | Enable caching to improve performance when hydrating blocks.
+    |
+    */
+    'cache' => [
+        'enabled' => true,
+        'ttl' => 3600, // 1 hour
+        'prefix' => 'atelier_block_',
+    ],
+];
