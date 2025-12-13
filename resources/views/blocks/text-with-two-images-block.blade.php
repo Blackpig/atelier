@@ -4,7 +4,7 @@
      * Text with Two Images Block Template
      * 
      * Available Variables:
-     * @var \Blackpigcreatif\Atelier\Blocks\TextWithTwoImagesBlock $block - The block instance
+     * @var \BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock $block - The block instance
      * @var string|null $title - Translated title
      * @var string|null $content - Translated HTML content
      * @var string|null $image_1_caption - Translated caption for first image
@@ -59,7 +59,7 @@
                     @if($image1)
                         <figure class="group">
                             <img 
-                                src="{{ $image1->getUrl('large') }}" 
+                                src="{{ $image1) }}" 
                                 alt="{{ $imageCaption1 ?? $title ?? 'Image' }}"
                                 class="w-full {{ $imageAspect }} object-cover rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300"
                                 loading="lazy"
@@ -75,7 +75,7 @@
                     @if($image2)
                         <figure class="group">
                             <img 
-                                src="{{ $image2->getUrl('large') }}" 
+                                src="{{ $image2 }}" 
                                 alt="{{ $imageCaption2 ?? $title ?? 'Image' }}"
                                 class="w-full {{ $imageAspect }} object-cover rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300"
                                 loading="lazy"

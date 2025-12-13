@@ -1,16 +1,16 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Blocks;
+namespace BlackpigCreatif\Atelier\Blocks;
 
-use Blackpigcreatif\Atelier\Abstracts\BaseBlock;
-use Blackpigcreatif\Atelier\Concerns\HasCommonOptions;
-use Blackpigcreatif\Atelier\Concerns\HasMedia;
-use Blackpigcreatif\Atelier\Forms\Components\TranslatableContainer;
+use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
+use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Illuminate\Contracts\View\View;
 
 class TextWithTwoImagesBlock extends BaseBlock
@@ -73,20 +73,30 @@ class TextWithTwoImagesBlock extends BaseBlock
             
             Section::make('Images')
                 ->schema([
-                    SpatieMediaLibraryFileUpload::make('image_1')
+                    FileUpload::make('image_1')
                         ->label('First Image')
-                        ->collection('blocks')
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
+                        ->deletable(true)
+                        ->disk('public')
+                        ->directory('blocks/images')
+                        ->visibility('public')
+                        ->acceptedFileTypes(['image/*'])
+                        ->maxSize(10240)
                         ->required(),
-                    
-                    SpatieMediaLibraryFileUpload::make('image_2')
+
+                    FileUpload::make('image_2')
                         ->label('Second Image')
-                        ->collection('blocks')
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
+                        ->deletable(true)
+                        ->disk('public')
+                        ->directory('blocks/images')
+                        ->visibility('public')
+                        ->acceptedFileTypes(['image/*'])
+                        ->maxSize(10240)
                         ->required(),
                 ])
                 ->columns(2)
@@ -159,13 +169,13 @@ class TextWithTwoImagesBlock extends BaseBlock
         };
     }
     
-    public function getImage1(): ?\Spatie\MediaLibrary\MediaCollections\Models\Media
+    public function getImage1(): ?string
     {
-        return $this->getMedia('image_1', 'blocks');
+        return $this->getMediaUrl('image_1');
     }
     
-    public function getImage2(): ?\Spatie\MediaLibrary\MediaCollections\Models\Media
+    public function getImage2(): ?string
     {
-        return $this->getMedia('image_2', 'blocks');
+        return $this->getMediaUrl('image_2');
     }
 }

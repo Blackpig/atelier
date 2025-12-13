@@ -1,32 +1,31 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Concerns;
-
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+namespace BlackpigCreatif\Atelier\Concerns;
 
 trait HasMedia
 {
-    public function getMedia(string $key, string $collection = 'blocks'): ?Media
+    public function getMediaUrl(string $key): ?string
     {
-        $mediaId = $this->get($key);
+        $path = $this->get($key);
         
-        if (!$mediaId) {
+        if (!$path) {
             return null;
         }
         
-        return Media::find($mediaId);
+        // If it's an array (multiple files), get first
+        if (is_array($path)) {
+            $path = $path[0] ?? null;
+        }
+        
+        if (!$path) {
+            return null;
+        }
+        
+        return \Storage::url($path);
     }
     
-    public function getMediaUrl(string $key, string $conversion = '', string $collection = 'blocks'): ?string
+    public function getMedia(string $key): ?string
     {
-        $media = $this->getMedia($key, $collection);
-        
-        if (!$media) {
-            return null;
-        }
-        
-        return $conversion 
-            ? $media->getUrl($conversion)
-            : $media->getUrl();
+        return $this->getMediaUrl($key);
     }
 }

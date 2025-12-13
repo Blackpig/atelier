@@ -1,256 +1,486 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Forms\Components;
+namespace BlackpigCreatif\Atelier\Forms\Components;
 
+use BlackpigCreatif\Atelier\Models\AtelierBlock;
+use BlackpigCreatif\Atelier\Models\AtelierBlockAttribute;
 use Closure;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Builder;
-use Filament\Forms\Components\Builder\Block;
-use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Str;
 
-class BlockManager extends Builder
+class BlockManager extends Field
 {
-    protected array $blockClasses = [];
-    
-    public function blocks(array $blockClasses): static
+    protected string $view = 'atelier::forms.components.block-manager';
+
+    protected array | Closure $blockClasses = [];
+
+    protected bool | Closure $isAddable = true;
+    protected bool | Closure $isEditable = true;
+    protected bool | Closure $isDeletable = true;
+    protected bool | Closure $isReorderable = true;
+    protected bool | Closure $isCollapsible = false;
+
+    protected ?string $addButtonLabel = null;
+
+    /**
+     * Set the available block classes
+     */
+    public function blocks(array | Closure $blockClasses): static
     {
         $this->blockClasses = $blockClasses;
-        
-        // Convert block classes to Filament Builder blocks
-        $builderBlocks = collect($blockClasses)
-            ->map(fn($blockClass) => $this->convertToBuilderBlock($blockClass))
-            ->toArray();
-        
-        // Call parent blocks() method
-        parent::blocks($builderBlocks);
-        
         return $this;
     }
-    
-    protected function convertToBuilderBlock(string $blockClass): Block
-    {
-        return Block::make($blockClass::getBlockIdentifier())
-            ->label($blockClass::getLabel())
-            ->icon($blockClass::getIcon())
-            ->schema($blockClass::getSchema())
-            ->columns(2)
-            ->when(
-                $blockClass::getDescription(),
-                fn(Block $block, string $description) => $block->hint($description)
-            );
-    }
-    
+
     /**
-     * Enable live preview for blocks
+     * Get the registered block classes
      */
-    public function livePreview(bool $condition = true): static
+    public function getBlockClasses(): array
     {
-        if ($condition) {
-            $this->extraItemActions([
-                Action::make('preview')
-                    ->icon('heroicon-o-eye')
-                    ->modalHeading('Block Preview')
-                    ->modalContent(fn (array $arguments, $component) => 
-                        view('atelier::preview.modal', [
-                            'block' => $component->getItemState($arguments['item']),
-                        ])
-                    )
-                    ->modalWidth(MaxWidth::SevenExtraLarge)
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
-                    ->slideOver(),
+        return $this->evaluate($this->blockClasses);
+    }
+
+    /**
+     * Configure addability
+     */
+    public function addable(bool | Closure $condition = true): static
+    {
+        $this->isAddable = $condition;
+        return $this;
+    }
+
+    public function isAddable(): bool
+    {
+        return $this->evaluate($this->isAddable);
+    }
+
+    /**
+     * Configure editability
+     */
+    public function editable(bool | Closure $condition = true): static
+    {
+        $this->isEditable = $condition;
+        return $this;
+    }
+
+    public function isEditable(): bool
+    {
+        return $this->evaluate($this->isEditable);
+    }
+
+    /**
+     * Configure deletability
+     */
+    public function deletable(bool | Closure $condition = true): static
+    {
+        $this->isDeletable = $condition;
+        return $this;
+    }
+
+    public function isDeletable(): bool
+    {
+        return $this->evaluate($this->isDeletable);
+    }
+
+    /**
+     * Configure reorderability
+     */
+    public function reorderable(bool | Closure $condition = true): static
+    {
+        $this->isReorderable = $condition;
+        return $this;
+    }
+
+    public function isReorderable(): bool
+    {
+        return $this->evaluate($this->isReorderable);
+    }
+
+    /**
+     * Configure collapsibility
+     */
+    public function collapsible(bool | Closure $condition = true): static
+    {
+        $this->isCollapsible = $condition;
+        return $this;
+    }
+
+    public function isCollapsible(): bool
+    {
+        return $this->evaluate($this->isCollapsible);
+    }
+
+    /**
+     * Set add button label
+     */
+    public function addButtonLabel(?string $label): static
+    {
+        $this->addButtonLabel = $label;
+        return $this;
+    }
+
+    public function getAddButtonLabel(): string
+    {
+        return $this->addButtonLabel ?? __('Add Content Block');
+    }
+
+    /**
+     * Setup the component
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Set default state to empty array
+        $this->default([]);
+
+        // Hydrate blocks from database
+        $this->afterStateHydrated(function (BlockManager $component, $state, $record) {
+            \Log::info('BlockManager afterStateHydrated called', [
+                'has_record' => (bool) $record,
+                'record_id' => $record?->id,
             ]);
-        }
-        
-        return $this;
-    }
-    
-    /**
-     * Override the default state handling to work with our database structure
-     */
-    public function saveRelationshipsUsing(?Closure $callback): static
-    {
-        $this->saveRelationshipsUsing = $callback ?? function ($component, $state) {
-            if (!$state) {
+
+            if (!$record || !method_exists($record, 'blocks')) {
                 return;
             }
-            
-            $record = $component->getRecord();
-            
-            // Get existing blocks
-            $existingBlocks = $record->blocks()->pluck('uuid')->toArray();
-            $processedBlocks = [];
-            
-            foreach ($state as $position => $blockData) {
-                $blockType = $blockData['type'];
-                $blockClass = $this->getBlockClassFromIdentifier($blockType);
-                
-                if (!$blockClass) {
-                    continue;
-                }
-                
-                // Find or create the block
-                $uuid = $blockData['uuid'] ?? null;
-                $block = $uuid 
-                    ? $record->blocks()->where('uuid', $uuid)->first()
-                    : null;
-                
-                if (!$block) {
-                    $block = $record->blocks()->create([
-                        'block_type' => $blockClass,
-                        'position' => $position,
-                        'uuid' => $uuid ?? (string) Str::uuid(),
-                    ]);
-                } else {
-                    $block->update(['position' => $position]);
-                }
-                
-                $processedBlocks[] = $block->uuid;
-                
-                // Save attributes
-                $this->saveBlockAttributes($block, $blockClass, $blockData['data']);
+
+            $blocks = $record->blocks()
+                ->ordered()
+                ->with('attributes')
+                ->get();
+
+            \Log::info('BlockManager: Loaded blocks from DB', [
+                'block_count' => $blocks->count(),
+            ]);
+
+            if ($blocks->isEmpty()) {
+                $component->state([]);
+                return;
             }
-            
-            // Delete removed blocks
-            $blocksToDelete = array_diff($existingBlocks, $processedBlocks);
-            $record->blocks()->whereIn('uuid', $blocksToDelete)->delete();
-        };
-        
-        return $this;
+
+            $blockData = [];
+
+            foreach ($blocks as $block) {
+                $extractedData = $component->extractBlockAttributes($block);
+
+                \Log::info('BlockManager: Extracted block data', [
+                    'uuid' => $block->uuid,
+                    'type' => $block->block_type,
+                    'data_keys' => array_keys($extractedData),
+                    'data' => $extractedData,
+                ]);
+
+                $blockData[] = [
+                    'uuid' => $block->uuid,
+                    'type' => $block->block_type,
+                    'data' => $extractedData,
+                    'position' => $block->position,
+                    'is_published' => $block->is_published,
+                ];
+            }
+
+            \Log::info('BlockManager: Setting state', [
+                'block_count' => count($blockData),
+                'blockData' => $blockData,
+            ]);
+
+            $component->state($blockData);
+        });
+
+        // Save blocks to database
+        $this->saveRelationshipsUsing(function ($component, $state) {
+            \Log::info('BlockManager saveRelationshipsUsing called', [
+                'state' => $state,
+                'statePath' => $component->getStatePath(),
+            ]);
+
+            $record = $component->getRecord();
+
+            if (!$record || !method_exists($record, 'blocks')) {
+                \Log::warning('BlockManager: No record or blocks method', [
+                    'has_record' => (bool) $record,
+                    'has_blocks_method' => $record ? method_exists($record, 'blocks') : false,
+                ]);
+                return;
+            }
+
+            \Log::info('BlockManager: About to save blocks', [
+                'record_id' => $record->id,
+                'block_count' => count($state ?? []),
+            ]);
+
+            // Get current block UUIDs from state
+            $currentUuids = collect($state ?? [])->pluck('uuid')->filter()->toArray();
+
+            // Delete blocks that are no longer in state
+            $record->blocks()
+                ->whereNotIn('uuid', $currentUuids)
+                ->get()
+                ->each(function ($block) {
+                    // Delete all attributes first
+                    $block->attributes()->delete();
+                    // Delete the block
+                    $block->delete();
+                });
+
+            // Create or update blocks
+            foreach ($state ?? [] as $index => $blockData) {
+                $block = $record->blocks()->updateOrCreate(
+                    ['uuid' => $blockData['uuid']],
+                    [
+                        'block_type' => $blockData['type'],
+                        'position' => $index,
+                        'is_published' => $blockData['is_published'] ?? true,
+                    ]
+                );
+
+                // Save block attributes
+                $component->saveBlockAttributes($block, $blockData['data'] ?? [], $blockData['type']);
+            }
+        });
+
+        // Dehydrate - ensure state is always set before saving
+        $this->dehydrated();
     }
-    
-    protected function saveBlockAttributes($block, string $blockClass, array $data): void
+
+    /**
+     * Extract attributes from a block model
+     */
+    protected function extractBlockAttributes(AtelierBlock $block): array
     {
+        $blockClass = $block->block_type;
+
+        if (!class_exists($blockClass)) {
+            return [];
+        }
+
         $translatableFields = $blockClass::getTranslatableFields();
-        $locales = array_keys(config('atelier.locales', ['en' => 'English']));
-        
-        // Clear existing attributes for this block
+        $attributes = $block->attributes()->get();
+        $data = [];
+
+        // Group attributes by key
+        foreach ($attributes->groupBy('key') as $key => $attributeGroup) {
+            if (in_array($key, $translatableFields)) {
+                // Build translation array - translatable fields ALWAYS return as locale-keyed array
+                $translations = [];
+
+                foreach ($attributeGroup as $attr) {
+                    if ($attr->locale) {
+                        $translations[$attr->locale] = $attr->getCastedValue();
+                    }
+                }
+
+                // Translatable fields always return as array (even if empty or single locale)
+                $data[$key] = $translations;
+            } else {
+                // Non-translatable - just the value
+                $firstAttr = $attributeGroup->first();
+                $data[$key] = $firstAttr ? $firstAttr->getCastedValue() : null;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Static wrapper for saving block attributes (for use in Resource pages)
+     */
+    public static function saveBlockAttributesStatic(AtelierBlock $block, array $data, string $blockType): void
+    {
+        $instance = new static('dummy');
+        $instance->saveBlockAttributes($block, $data, $blockType);
+    }
+
+    /**
+     * Save block attributes to database
+     */
+    protected function saveBlockAttributes(AtelierBlock $block, array $data, string $blockType): void
+    {
+        if (!class_exists($blockType)) {
+            return;
+        }
+
+        $translatableFields = $blockType::getTranslatableFields();
+
+        // Delete existing attributes
         $block->attributes()->delete();
-        
+
         $sortOrder = 0;
-        
+        $defaultLocale = config('atelier.default_locale', 'en');
+
         foreach ($data as $key => $value) {
-            $isTranslatable = in_array($key, $translatableFields);
-            
-            if ($isTranslatable && is_array($value)) {
-                // Save translation for each locale
-                foreach ($value as $locale => $translatedValue) {
-                    if ($translatedValue !== null && $translatedValue !== '') {
-                        $block->attributes()->create([
-                            'key' => $key,
-                            'value' => $this->castValueForStorage($translatedValue),
-                            'type' => $this->getValueType($translatedValue),
-                            'locale' => $locale,
-                            'translatable' => true,
-                            'sort_order' => $sortOrder,
-                        ]);
+            // Extract file paths if this is a file upload field
+            if ($this->isFileUploadValue($value)) {
+                $value = $this->extractFilePath($value);
+            }
+
+            if (in_array($key, $translatableFields)) {
+                // Translatable field - MUST be saved with locale keys
+
+                // If value is not an array, wrap it in default locale
+                if (!is_array($value)) {
+                    $value = [$defaultLocale => $value];
+                } elseif (!empty($value) && !$this->isLocaleKeyedArray($value)) {
+                    // It's an array but not locale-keyed (might be file upload array)
+                    // Keep as is if it's a file upload, otherwise wrap in default locale
+                    if (!$this->isFileUploadValue($value)) {
+                        $value = [$defaultLocale => $value];
+                    }
+                }
+
+                // Create one attribute per locale
+                foreach ($value as $locale => $localeValue) {
+                    if ($localeValue !== null && $localeValue !== '') {
+                        // Handle file uploads in translatable fields
+                        if ($this->isFileUploadValue($localeValue)) {
+                            $localeValue = $this->extractFilePath($localeValue);
+                        }
+
+                        $this->createAttribute($block, $key, $localeValue, $locale, true, $sortOrder++);
                     }
                 }
             } else {
-                // Non-translatable field - save once without locale
-                $block->attributes()->create([
-                    'key' => $key,
-                    'value' => $this->castValueForStorage($value),
-                    'type' => $this->getValueType($value),
-                    'locale' => null,
-                    'translatable' => false,
-                    'sort_order' => $sortOrder,
-                ]);
+                // Non-translatable field - single attribute without locale
+                if ($value !== null && $value !== '') {
+                    $this->createAttribute($block, $key, $value, null, false, $sortOrder++);
+                }
             }
-            
-            $sortOrder++;
         }
-        
-        // Clear cache for this block
+
+        // Clear block cache
         $block->clearCache();
     }
-    
-    protected function castValueForStorage(mixed $value): string
+
+    /**
+     * Check if an array is locale-keyed (has locale codes as keys)
+     */
+    protected function isLocaleKeyedArray($value): bool
     {
-        if (is_array($value)) {
-            return json_encode($value);
+        if (!is_array($value) || empty($value)) {
+            return false;
         }
-        
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
+
+        $availableLocales = array_keys(config('atelier.locales', ['en' => 'English']));
+
+        // Check if all keys are valid locale codes
+        foreach (array_keys($value) as $key) {
+            if (!in_array($key, $availableLocales)) {
+                return false;
+            }
         }
-        
-        return (string) $value;
+
+        return true;
     }
-    
-    protected function getValueType(mixed $value): string
+
+    /**
+     * Check if a value looks like a file upload value
+     */
+    protected function isFileUploadValue($value): bool
     {
-        return match(true) {
+        if (!is_array($value)) {
+            return false;
+        }
+
+        // Check if it's the {"uuid":"path"} format from file uploads
+        foreach ($value as $key => $val) {
+            // File upload format has UUID keys and path values
+            if (is_string($key) && is_string($val) &&
+                preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $key) &&
+                str_contains($val, '/')) {
+                return true;
+            }
+            // Also check for simple array of paths ["path1", "path2"]
+            if (is_numeric($key) && is_string($val) && str_contains($val, '/')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract actual file paths from Livewire temporary upload format
+     * Always returns array format for FileUpload compatibility
+     */
+    protected function extractFilePath($value)
+    {
+        if (!is_array($value)) {
+            return is_string($value) && $value !== '' ? [$value] : null;
+        }
+
+        // Handle {"uuid":"path"} format - extract the paths
+        $paths = [];
+        foreach ($value as $key => $val) {
+            if (is_string($val) && str_contains($val, '/')) {
+                $paths[] = $val;
+            }
+        }
+
+        return !empty($paths) ? $paths : null;
+    }
+
+    /**
+     * Create a single attribute
+     */
+    protected function createAttribute(
+        AtelierBlock $block,
+        string $key,
+        mixed $value,
+        ?string $locale,
+        bool $translatable,
+        int $sortOrder
+    ): void {
+        // Determine type
+        $type = match(true) {
             is_int($value) => 'integer',
             is_float($value) => 'float',
             is_bool($value) => 'boolean',
             is_array($value) => 'array',
             default => 'string',
         };
+
+        // Convert arrays to JSON
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
+
+        // Convert booleans to string
+        if (is_bool($value)) {
+            $value = $value ? '1' : '0';
+        }
+
+        $block->attributes()->create([
+            'key' => $key,
+            'value' => (string) $value,
+            'type' => $type,
+            'locale' => $locale,
+            'translatable' => $translatable,
+            'sort_order' => $sortOrder,
+        ]);
     }
-    
-    protected function getBlockClassFromIdentifier(string $identifier): ?string
+
+    /**
+     * Get block class by type string
+     */
+    public function getBlockClass(string $type): ?string
     {
-        foreach ($this->blockClasses as $class) {
-            if ($class::getBlockIdentifier() === $identifier) {
+        $blockClasses = $this->getBlockClasses();
+
+        foreach ($blockClasses as $class) {
+            if ($class === $type || $class::getBlockIdentifier() === $type) {
                 return $class;
             }
         }
-        
+
         return null;
     }
-    
+
     /**
-     * Load state from database
+     * Generate a new UUID
      */
-    public function dehydrateStateUsing(?Closure $callback): static
+    public function generateUuid(): string
     {
-        $this->dehydrateStateUsing = $callback ?? function ($component, $state) {
-            $record = $component->getRecord();
-            
-            if (!$record || !$record->exists) {
-                return [];
-            }
-            
-            return $record->blocks()
-                ->ordered()
-                ->get()
-                ->map(function ($block) {
-                    $blockClass = $block->block_type;
-                    $translatableFields = $blockClass::getTranslatableFields();
-                    
-                    // Load all attributes for this block
-                    $attributes = $block->attributes()->get();
-                    
-                    $data = [];
-                    
-                    // Group by key
-                    foreach ($attributes->groupBy('key') as $key => $attributeGroup) {
-                        if (in_array($key, $translatableFields)) {
-                            // Build translation array: field_name => ['en' => 'value', 'fr' => 'value']
-                            $translations = [];
-                            foreach ($attributeGroup as $attr) {
-                                if ($attr->locale) {
-                                    $translations[$attr->locale] = $attr->getCastedValue();
-                                }
-                            }
-                            $data[$key] = $translations;
-                        } else {
-                            // Non-translatable - just the value
-                            $data[$key] = $attributeGroup->first()->getCastedValue();
-                        }
-                    }
-                    
-                    return [
-                        'type' => $blockClass::getBlockIdentifier(),
-                        'uuid' => $block->uuid,
-                        'data' => $data,
-                    ];
-                })
-                ->toArray();
-        };
-        
-        return $this;
+        return (string) Str::uuid();
     }
 }

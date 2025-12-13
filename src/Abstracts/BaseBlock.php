@@ -1,6 +1,6 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Abstracts;
+namespace BlackpigCreatif\Atelier\Abstracts;
 
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\View;

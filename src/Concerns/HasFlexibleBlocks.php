@@ -1,8 +1,8 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Concerns;
+namespace BlackpigCreatif\Atelier\Concerns;
 
-use Blackpigcreatif\Atelier\Models\AtelierBlock;
+use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait HasFlexibleBlocks

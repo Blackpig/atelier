@@ -1,8 +1,8 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Concerns;
+namespace BlackpigCreatif\Atelier\Concerns;
 
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 
 trait HasCommonOptions
 {

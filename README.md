@@ -68,7 +68,7 @@ php artisan vendor:publish --tag="atelier-views"
 
 ### 1. Add the trait to your model
 ```php
-use Blackpigcreatif\Atelier\Concerns\HasFlexibleBlocks;
+use BlackpigCreatif\Atelier\Concerns\HasFlexibleBlocks;
 
 class Page extends Model
 {
@@ -78,9 +78,9 @@ class Page extends Model
 
 ### 2. Add the BlockManager to your Filament resource
 ```php
-use Blackpigcreatif\Atelier\Forms\Components\BlockManager;
-use Blackpigcreatif\Atelier\Blocks\HeroBlock;
-use Blackpigcreatif\Atelier\Blocks\TextWithTwoImagesBlock;
+use BlackpigCreatif\Atelier\Forms\Components\BlockManager;
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+use BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock;
 
 public static function form(Form $form): Form
 {
@@ -120,9 +120,9 @@ Create a new block class:
 ```php
 namespace App\Blocks;
 
-use Blackpigcreatif\Atelier\Abstracts\BaseBlock;
-use Blackpigcreatif\Atelier\Concerns\HasCommonOptions;
-use Blackpigcreatif\Atelier\Forms\Components\TranslatableContainer;
+use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
+use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Illuminate\Contracts\View\View;
@@ -261,7 +261,7 @@ This adds a preview button (👁️) to each block that opens a modal showing ho
 
 Adds background color, spacing, and width options:
 ```php
-use Blackpigcreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 
 class MyBlock extends BaseBlock
 {
@@ -282,7 +282,7 @@ class MyBlock extends BaseBlock
 
 Simplifies Spatie Media Library integration:
 ```php
-use Blackpigcreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Concerns\HasMedia;
 
 // In your block
 $image = $block->getMedia('image_field');
@@ -293,7 +293,7 @@ $url = $block->getMediaUrl('image_field', 'large');
 
 Add to your parent models (Page, Post, etc):
 ```php
-use Blackpigcreatif\Atelier\Concerns\HasFlexibleBlocks;
+use BlackpigCreatif\Atelier\Concerns\HasFlexibleBlocks;
 
 class Page extends Model
 {

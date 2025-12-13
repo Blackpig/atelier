@@ -1,10 +1,10 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Forms\Components;
+namespace BlackpigCreatif\Atelier\Forms\Components;
 
 use Closure;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\Tabs\Tab;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 
 class TranslatableContainer extends Tabs
 {

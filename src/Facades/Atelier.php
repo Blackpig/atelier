@@ -1,11 +1,11 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Facades;
+namespace BlackpigCreatif\Atelier\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Blackpigcreatif\Atelier\Atelier
+ * @see \BlackpigCreatif\Atelier\Atelier
  */
 class Atelier extends Facade
 {

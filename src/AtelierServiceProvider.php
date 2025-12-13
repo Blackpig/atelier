@@ -1,11 +1,13 @@
 <?php
 
-namespace Blackpigcreatif\Atelier;
+namespace BlackpigCreatif\Atelier;
 
-use Blackpigcreatif\Atelier\Models\AtelierBlock;
-use Blackpigcreatif\Atelier\Observers\AtelierBlockObserver;
+use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
+use BlackpigCreatif\Atelier\Models\AtelierBlock;
+use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AtelierServiceProvider extends ServiceProvider
 {
@@ -21,13 +23,16 @@ class AtelierServiceProvider extends ServiceProvider
     {
         // Register observer
         AtelierBlock::observe(AtelierBlockObserver::class);
-        
+
+        // Register Livewire components
+        Livewire::component('atelier-block-form-modal', BlockFormModal::class);
+
         // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        
+
         // Load views
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'atelier');
-        
+
         // Load translations
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'atelier');
         
@@ -72,19 +77,9 @@ class AtelierServiceProvider extends ServiceProvider
             ], 'atelier');
         }
         
-        // Register Blade directive for rendering blocks
+        // Register Blade directive for rendering blocks - Laravel 12 syntax
         Blade::directive('renderBlocks', function ($expression) {
             return "<?php echo {$expression}->renderBlocks(app()->getLocale()); ?>";
         });
-        
-        // Register Blade component aliases
-        Blade::componentNamespace('Blackpigcreatif\\Atelier\\Forms\\Components', 'atelier');
     }
 }
-```
-
----
-
-## `tests/.gitkeep`
-```
-# This file ensures the tests directory is tracked by Git

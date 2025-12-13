@@ -1,11 +1,12 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Models;
+namespace BlackpigCreatif\Atelier\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class AtelierBlockAttribute extends Model implements HasMedia
 {
@@ -48,5 +49,33 @@ class AtelierBlockAttribute extends Model implements HasMedia
             'array', 'json' => json_decode($this->value, true),
             default => $this->value,
         };
+    }
+    
+    // Register media conversions
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(200)
+            ->height(200)
+            ->sharpen(10)
+            ->nonQueued();
+        
+        $this->addMediaConversion('medium')
+            ->width(800)
+            ->height(600)
+            ->sharpen(10)
+            ->nonQueued();
+        
+        $this->addMediaConversion('large')
+            ->width(1920)
+            ->height(1080)
+            ->sharpen(10)
+            ->nonQueued();
+    }
+    
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('blocks');
+        $this->addMediaCollection('hero-backgrounds');
     }
 }

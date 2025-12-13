@@ -1,18 +1,19 @@
 <?php
 
-namespace Blackpigcreatif\Atelier\Blocks;
+namespace BlackpigCreatif\Atelier\Blocks;
 
-use Blackpigcreatif\Atelier\Abstracts\BaseBlock;
-use Blackpigcreatif\Atelier\Concerns\HasCommonOptions;
-use Blackpigcreatif\Atelier\Concerns\HasMedia;
-use Blackpigcreatif\Atelier\Forms\Components\TranslatableContainer;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Section;
+use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
+use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Illuminate\Contracts\View\View;
 
 class HeroBlock extends BaseBlock
@@ -46,18 +47,18 @@ class HeroBlock extends BaseBlock
                                 ->required()
                                 ->maxLength(255)
                                 ->placeholder('Your compelling headline'),
-                            
+
                             TextInput::make('subheadline')
                                 ->label('Subheadline')
                                 ->maxLength(500)
                                 ->placeholder('Supporting text or tagline'),
-                            
+
                             Textarea::make('description')
                                 ->label('Description')
                                 ->rows(3)
                                 ->maxLength(1000)
                                 ->placeholder('Brief description or value proposition'),
-                            
+
                             TextInput::make('cta_text')
                                 ->label('Button Text')
                                 ->maxLength(50)
@@ -78,12 +79,18 @@ class HeroBlock extends BaseBlock
                         ->label('Open in new tab')
                         ->default(false),
                     
-                    SpatieMediaLibraryFileUpload::make('background_image')
+                        FileUpload::make('background_image')
                         ->label('Background Image')
-                        ->collection('hero-backgrounds')
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
+                        ->deletable(true)
+                        ->disk('public')
+                        ->directory('blocks/hero')
+                        ->visibility('public')
+                        ->downloadable()
+                        ->acceptedFileTypes(['image/*'])
+                        ->maxSize(10240) // 10MB
                         ->hint('Recommended: 1920x1080px or larger')
                         ->columnSpanFull(),
                     
@@ -110,7 +117,7 @@ class HeroBlock extends BaseBlock
                             ])
                             ->default('text-white')
                             ->native(false),
-                    ])->columns(2),
+                    ]),
                     
                     Group::make([
                         Select::make('height')
@@ -133,9 +140,8 @@ class HeroBlock extends BaseBlock
                             ])
                             ->default('text-center items-center')
                             ->native(false),
-                    ])->columns(2),
+                    ]),
                 ])
-                ->columns(2)
                 ->collapsible(),
             
             // Include common options

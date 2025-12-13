@@ -16,8 +16,8 @@
             // If we couldn't find in config, try the shipped blocks
             if (!$blockClass) {
                 $shippedBlocks = [
-                    \Blackpigcreatif\Atelier\Blocks\HeroBlock::class,
-                    \Blackpigcreatif\Atelier\Blocks\TextWithTwoImagesBlock::class,
+                    \BlackpigCreatif\Atelier\Blocks\HeroBlock::class,
+                    \BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock::class,
                 ];
                 
                 foreach ($shippedBlocks as $class) {

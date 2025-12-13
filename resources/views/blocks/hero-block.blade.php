@@ -4,7 +4,7 @@
      * Hero Block Template
      * 
      * Available Variables:
-     * @var \Blackpigcreatif\Atelier\Blocks\HeroBlock $block - The block instance
+     * @var \BlackpigCreatif\Atelier\Blocks\HeroBlock $block - The block instance
      * @var string|null $headline - Translated headline text
      * @var string|null $subheadline - Translated subheadline text
      * @var string|null $description - Translated description text
@@ -30,10 +30,10 @@
          data-block-id="{{ $block->blockId ?? '' }}">
     
     {{-- Background Image Layer --}}
-    @if($backgroundImage = $block->getMedia('background_image'))
+    @if($backgroundImage = $block->getMediaUrl('background_image'))
         <div class="absolute inset-0 z-0">
             <img 
-                src="{{ $backgroundImage->getUrl('large') }}" 
+                src="{{ $backgroundImage }}" 
                 alt="{{ $block->getTranslated('headline') ?? 'Hero background' }}"
                 class="w-full h-full object-cover"
                 loading="eager"
