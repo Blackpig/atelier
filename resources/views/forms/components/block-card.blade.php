@@ -4,61 +4,49 @@
 @endphp
 
 <div
-    class="flex items-start gap-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 shadow-sm transition hover:shadow-md"
-    x-bind:class="{ 'cursor-move': {{ $isReorderable ? 'true' : 'false' }} }"
+    class="group flex items-center gap-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 shadow-sm transition-all hover:shadow-md hover:border-primary-500 dark:hover:border-primary-500"
 >
     {{-- Drag Handle --}}
     @if($isReorderable)
-        <div class="flex-shrink-0 pt-1 cursor-move">
+        <div x-sortable-handle class="flex-shrink-0 cursor-move opacity-50 group-hover:opacity-100 transition-opacity">
             <x-filament::icon
                 icon="heroicon-o-bars-3"
-                class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                class="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             />
         </div>
     @endif
 
     {{-- Block Icon --}}
     <div class="flex-shrink-0">
-        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20">
-            <x-filament::icon
-                icon="heroicon-o-cube"
-                class="w-5 h-5 text-primary-600 dark:text-primary-400"
-            />
+        <div class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-50 dark:bg-primary-900/20">
+            <div x-html="blockMetadata[block.type]?.iconSvg || ''" class="w-5 h-5 text-primary-600 dark:text-primary-400"></div>
         </div>
     </div>
 
     {{-- Block Content --}}
     <div class="flex-1 min-w-0">
-        {{-- Block Type Label --}}
-        <div class="flex items-center gap-2 mb-1">
+        {{-- Block Type Label & Preview in one line --}}
+        <div class="flex items-center gap-2">
             <h4
-                class="text-sm font-medium text-gray-900 dark:text-white"
-                x-text="getBlockLabel(block.type)"
+                class="text-sm font-semibold text-gray-900 dark:text-white"
+                x-text="blockMetadata[block.type]?.label || block.type.split('\\\\').pop().replace('Block', '')"
             ></h4>
             <span
                 x-show="!block.is_published"
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
             >
                 Draft
             </span>
-        </div>
-
-        {{-- Block Preview --}}
-        <p
-            class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2"
-            x-text="getBlockPreview(block)"
-        ></p>
-
-        {{-- Position Badge --}}
-        <div class="mt-2">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                Position: <span x-text="index + 1"></span>
-            </span>
+            <span class="text-gray-400 dark:text-gray-600">•</span>
+            <p
+                class="flex-1 text-xs text-gray-500 dark:text-gray-400 truncate"
+                x-text="getBlockPreview(block)"
+            ></p>
         </div>
     </div>
 
     {{-- Actions --}}
-    <div class="flex-shrink-0 flex items-center gap-1">
+    <div class="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         @if($isEditable)
             <x-filament::icon-button
                 icon="heroicon-o-pencil"
@@ -84,14 +72,19 @@
 @pushOnce('scripts')
 <script>
     // Helper functions for block rendering
+    // Note: blockMetadata is passed from the parent Alpine component
     window.getBlockLabel = function(blockType) {
-        // Map block types to labels
-        const labels = {
-            'BlackpigCreatif\\Atelier\\Blocks\\HeroBlock': 'Hero Section',
-            'BlackpigCreatif\\Atelier\\Blocks\\TextWithTwoImagesBlock': 'Text with Two Images',
-        };
+        // Try to get label from parent Alpine blockMetadata
+        const parentElement = document.querySelector('[x-data]');
+        if (parentElement && parentElement._x_dataStack) {
+            const alpineData = parentElement._x_dataStack[0];
+            if (alpineData.blockMetadata && alpineData.blockMetadata[blockType]) {
+                return alpineData.blockMetadata[blockType].label;
+            }
+        }
 
-        return labels[blockType] || blockType.split('\\').pop().replace('Block', '');
+        // Fallback to extracting from class name
+        return blockType.split('\\').pop().replace('Block', '');
     };
 
     window.getBlockPreview = function(block, currentLocale = 'en') {

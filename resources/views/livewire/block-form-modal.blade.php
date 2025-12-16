@@ -1,6 +1,7 @@
 <x-filament::modal
     id="block-form-modal"
     :heading="$blockType ? $blockType::getLabel() : 'Block Form'"
+    :width="$this->getModalWidth()"
     slide-over
     :close-by-clicking-away="false"
 >

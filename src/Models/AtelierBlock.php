@@ -60,7 +60,7 @@ class AtelierBlock extends Model
     
     public function scopeOrdered($query)
     {
-        return $query->orderBy('position');
+        return $query->orderBy('position')->orderBy('id');
     }
     
     // Get hydrated block instance

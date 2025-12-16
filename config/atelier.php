@@ -18,7 +18,19 @@ return [
     ],
     
     'default_locale' => 'en',
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Block Form Modal
+    |--------------------------------------------------------------------------
+    |
+    | Configure the appearance of the block editing modal.
+    |
+    */
+    'modal' => [
+        'width' => '5xl', // Options: xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl, screen
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Database Table Prefix

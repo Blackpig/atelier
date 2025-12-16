@@ -39,15 +39,14 @@ class BlockFormModal extends LivewireComponent implements HasForms
         // Form will be filled when open() is called
     }
 
+    public function getModalWidth(): string
+    {
+        return config('atelier.modal.width', '5xl');
+    }
+
     public function form(Schema $schema): Schema
     {
-        \Log::info('BlockFormModal form() called', [
-            'blockType' => $this->blockType,
-            'class_exists' => $this->blockType ? class_exists($this->blockType) : false,
-        ]);
-
         if (!$this->blockType || !class_exists($this->blockType)) {
-            \Log::warning('BlockFormModal: Invalid block type');
             return $schema->schema([]);
         }
 
@@ -67,13 +66,6 @@ class BlockFormModal extends LivewireComponent implements HasForms
             $data = $params['data'] ?? [];
         }
 
-        \Log::info('BlockFormModal open called', [
-            'componentStatePath' => $componentStatePath,
-            'blockType' => $blockType,
-            'uuid' => $uuid,
-            'has_data' => !empty($data),
-        ]);
-
         $this->blockType = $blockType;
         $this->uuid = $uuid;
         $this->componentStatePath = $componentStatePath;
@@ -86,37 +78,18 @@ class BlockFormModal extends LivewireComponent implements HasForms
         // Fill form - this will populate blockData with proper structure
         $this->form->fill($data);
 
-        \Log::info('BlockFormModal state set, dispatching open-modal');
         $this->dispatch('open-modal', id: 'block-form-modal');
     }
 
     public function save(): void
     {
-        \Log::info('BlockFormModal save() ENTRY', [
-            'uuid' => $this->uuid,
-            'blockType' => $this->blockType,
-            'componentStatePath' => $this->componentStatePath,
-        ]);
-
         try {
-            \Log::info('BlockFormModal: Getting form state');
             $data = $this->form->getState();
-
-            \Log::info('BlockFormModal: Form state retrieved', [
-                'data' => $data,
-            ]);
 
             if (!$this->uuid) {
                 // Adding new block
                 $this->uuid = (string) Str::uuid();
             }
-
-            \Log::info('BlockFormModal save called', [
-                'uuid' => $this->uuid,
-                'type' => $this->blockType,
-                'componentStatePath' => $this->componentStatePath,
-                'data_keys' => array_keys($data),
-            ]);
 
             // Dispatch event to parent component with the saved data
             $this->dispatch('block-form-saved',
@@ -125,8 +98,6 @@ class BlockFormModal extends LivewireComponent implements HasForms
                 data: $data,
                 componentStatePath: $this->componentStatePath
             );
-
-            \Log::info('BlockFormModal event dispatched');
 
             $this->close();
 

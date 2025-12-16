@@ -29,7 +29,7 @@ class TextWithTwoImagesBlock extends BaseBlock
     
     public static function getIcon(): string
     {
-        return 'heroicon-o-photo';
+        return 'atelier.icons.text-two-images';
     }
     
     public static function getSchema(): array

@@ -5,6 +5,8 @@ namespace BlackpigCreatif\Atelier;
 use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -24,6 +26,11 @@ class AtelierServiceProvider extends ServiceProvider
         // Register observer
         AtelierBlock::observe(AtelierBlockObserver::class);
 
+        // Register Filament assets
+        FilamentAsset::register([
+            Css::make('atelier-styles', __DIR__.'/../resources/dist/atelier.css'),
+        ], package: 'blackpig-creatif/atelier');
+
         // Register Livewire components
         Livewire::component('atelier-block-form-modal', BlockFormModal::class);
 
@@ -32,6 +39,9 @@ class AtelierServiceProvider extends ServiceProvider
 
         // Load views
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'atelier');
+
+        // Register Blade components for icons
+        Blade::anonymousComponentPath(__DIR__.'/../resources/views/components/icons', 'atelier.icons');
 
         // Load translations
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'atelier');

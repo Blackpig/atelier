@@ -32,7 +32,7 @@ class HeroBlock extends BaseBlock
     
     public static function getIcon(): string
     {
-        return 'heroicon-o-photo';
+        return 'atelier.icons.hero';
     }
     
     public static function getSchema(): array

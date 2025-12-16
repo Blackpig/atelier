@@ -41,6 +41,52 @@ class BlockManager extends Field
     }
 
     /**
+     * Get block metadata for all registered block classes
+     */
+    public function getBlockMetadata(): array
+    {
+        $blockClasses = $this->getBlockClasses();
+        $metadata = [];
+
+        foreach ($blockClasses as $blockClass) {
+            if (!class_exists($blockClass)) {
+                continue;
+            }
+
+            $icon = $blockClass::getIcon();
+            $iconSvg = $this->getIconSvg($icon);
+
+            $metadata[$blockClass] = [
+                'label' => $blockClass::getLabel(),
+                'description' => $blockClass::getDescription(),
+                'icon' => $icon,
+                'iconSvg' => $iconSvg,
+            ];
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Get SVG content for an icon
+     */
+    protected function getIconSvg(string $icon): ?string
+    {
+        // Check if it's an Atelier icon
+        if (str_starts_with($icon, 'atelier.icons.')) {
+            $iconName = str_replace('atelier.icons.', '', $icon);
+            $iconPath = __DIR__ . '/../../../resources/views/components/icons/' . $iconName . '.blade.php';
+
+            if (file_exists($iconPath)) {
+                return file_get_contents($iconPath);
+            }
+        }
+
+        // For heroicons or other icons, return null (will use Filament's icon component)
+        return null;
+    }
+
+    /**
      * Configure addability
      */
     public function addable(bool | Closure $condition = true): static
@@ -136,11 +182,6 @@ class BlockManager extends Field
 
         // Hydrate blocks from database
         $this->afterStateHydrated(function (BlockManager $component, $state, $record) {
-            \Log::info('BlockManager afterStateHydrated called', [
-                'has_record' => (bool) $record,
-                'record_id' => $record?->id,
-            ]);
-
             if (!$record || !method_exists($record, 'blocks')) {
                 return;
             }
@@ -149,10 +190,6 @@ class BlockManager extends Field
                 ->ordered()
                 ->with('attributes')
                 ->get();
-
-            \Log::info('BlockManager: Loaded blocks from DB', [
-                'block_count' => $blocks->count(),
-            ]);
 
             if ($blocks->isEmpty()) {
                 $component->state([]);
@@ -164,13 +201,6 @@ class BlockManager extends Field
             foreach ($blocks as $block) {
                 $extractedData = $component->extractBlockAttributes($block);
 
-                \Log::info('BlockManager: Extracted block data', [
-                    'uuid' => $block->uuid,
-                    'type' => $block->block_type,
-                    'data_keys' => array_keys($extractedData),
-                    'data' => $extractedData,
-                ]);
-
                 $blockData[] = [
                     'uuid' => $block->uuid,
                     'type' => $block->block_type,
@@ -180,35 +210,16 @@ class BlockManager extends Field
                 ];
             }
 
-            \Log::info('BlockManager: Setting state', [
-                'block_count' => count($blockData),
-                'blockData' => $blockData,
-            ]);
-
             $component->state($blockData);
         });
 
         // Save blocks to database
         $this->saveRelationshipsUsing(function ($component, $state) {
-            \Log::info('BlockManager saveRelationshipsUsing called', [
-                'state' => $state,
-                'statePath' => $component->getStatePath(),
-            ]);
-
             $record = $component->getRecord();
 
             if (!$record || !method_exists($record, 'blocks')) {
-                \Log::warning('BlockManager: No record or blocks method', [
-                    'has_record' => (bool) $record,
-                    'has_blocks_method' => $record ? method_exists($record, 'blocks') : false,
-                ]);
                 return;
             }
-
-            \Log::info('BlockManager: About to save blocks', [
-                'record_id' => $record->id,
-                'block_count' => count($state ?? []),
-            ]);
 
             // Get current block UUIDs from state
             $currentUuids = collect($state ?? [])->pluck('uuid')->filter()->toArray();

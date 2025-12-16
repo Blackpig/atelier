@@ -6,6 +6,7 @@
     $isDeletable = $isDeletable();
     $isReorderable = $isReorderable();
     $blockClasses = $getBlockClasses();
+    $blockMetadata = $getBlockMetadata();
     $modalKey = 'block-form-modal-' . str_replace('.', '-', $statePath);
 @endphp
 
@@ -13,8 +14,8 @@
     :component="$getFieldWrapperView()"
     :field="$field"
 >
-    {{-- Render modal with stable wire:key to persist across re-renders --}}
-    <div wire:key="{{ $modalKey }}" class="hidden">
+    {{-- Render modal - wire:ignore prevents re-render during parent updates --}}
+    <div wire:ignore>
         @livewire(\BlackpigCreatif\Atelier\Livewire\BlockFormModal::class, [], key($modalKey))
     </div>
 
@@ -23,6 +24,7 @@
             blocks: @js($blocks),
             statePath: @js($statePath),
             blockClasses: @js($blockClasses),
+            blockMetadata: @js($blockMetadata),
             showTypeSelector: false,
             needsSync: false,
 
@@ -40,12 +42,30 @@
                     }
                 });
 
-                // Sync before any Livewire request (like form save)
-                Livewire.hook('commit', ({component}) => {
-                    // Only sync for this component instance
-                    if (this.needsSync && wire.__instance && component.id === wire.__instance.id) {
-                        console.log('Syncing before Livewire commit');
-                        // Use $wire to update state
+                // Hook into SortableJS to update Alpine state on drag end
+                setTimeout(() => {
+                    const container = this.$refs.sortableContainer;
+                    if (container && container.sortable) {
+                        container.sortable.options.onEnd = (event) => {
+                            const { oldIndex, newIndex } = event;
+
+                            // No change, do nothing
+                            if (oldIndex === newIndex) return;
+
+                            // Get new order from current DOM state (after SortableJS moved elements)
+                            const items = Array.from(container.querySelectorAll('[x-sortable-item]'));
+                            const newOrder = items.map(item => item.dataset.uuid);
+
+                            // Update Alpine state and sync to Livewire
+                            this.reorderBlocks(newOrder);
+                        };
+                    }
+                }, 100);
+
+                // Sync Alpine state to Livewire before ANY commit (Edit/Create/Update)
+                // This handles block edits/additions, reordering syncs immediately
+                Livewire.hook('commit', ({ component }) => {
+                    if (this.needsSync) {
                         wire.set(statePath, getBlocks());
                         setNeedsSyncFalse();
                     }
@@ -54,8 +74,6 @@
 
             handleBlockSaved(event) {
                 const { uuid, type, data } = event;
-
-                console.log('handleBlockSaved called', { uuid, type, data });
 
                 // Find existing block or add new one
                 const existingIndex = this.blocks.findIndex(b => b.uuid === uuid);
@@ -78,7 +96,6 @@
                 }
 
                 this.reindexBlocks();
-                console.log('Block saved, state updated:', this.blocks);
 
                 // Mark that we need to sync, but don't do it now (causes re-render)
                 // Will sync when form is submitted via Livewire.hook('commit')
@@ -96,13 +113,9 @@
             },
 
             selectBlockType(blockType) {
-                console.log('selectBlockType called', { blockType, statePath: this.statePath });
-
                 // Close the type selector modal first
                 this.showTypeSelector = false;
                 this.$dispatch('close-modal', { id: 'block-type-selector' });
-
-                console.log('Dispatching openBlockFormModal event');
 
                 // Open the block form modal - use Livewire 3 named parameters
                 Livewire.dispatch('openBlockFormModal', {
@@ -111,8 +124,6 @@
                     uuid: null,
                     data: {}
                 });
-
-                console.log('Event dispatched');
             },
 
             openEditBlockModal(uuid) {
@@ -144,13 +155,21 @@
             },
 
             reorderBlocks(newOrder) {
+                // Reorder blocks - keep original Proxy objects
                 const reordered = newOrder.map(uuid =>
                     this.blocks.find(block => block.uuid === uuid)
                 ).filter(Boolean);
 
+                // Update positions
+                reordered.forEach((block, index) => {
+                    block.position = index;
+                });
+
+                // Replace array to trigger Alpine reactivity
                 this.blocks = reordered;
-                this.reindexBlocks();
-                this.needsSync = true;
+
+                // Sync IMMEDIATELY to Livewire (not deferred)
+                this.$wire.set(this.statePath, this.blocks);
             },
 
             reindexBlocks() {
@@ -167,12 +186,13 @@
             wire:ignore
             @if($isReorderable)
                 x-sortable
-                x-on:sortable-end="reorderBlocks($event.detail.map(el => el.dataset.uuid))"
+                x-ref="sortableContainer"
             @endif
-            class="space-y-3"
+            class="space-y-1.5"
         >
-            <template x-for="(block, index) in blocks" :key="block.uuid">
+            <template x-for="(block, index) in blocks" :key="block.uuid + '-' + block.position">
                 <div
+                    x-sortable-item
                     :data-uuid="block.uuid"
                     class="relative"
                 >
@@ -236,18 +256,15 @@
                         <button
                             type="button"
                             x-on:click="selectBlockType(blockClass)"
-                            class="relative flex flex-col items-start gap-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-left transition hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            class="relative flex items-start gap-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-left transition-all duration-200 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
-                            <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary-50 dark:bg-primary-900/20">
-                                <x-filament::icon
-                                    icon="heroicon-o-cube"
-                                    class="w-6 h-6 text-primary-600 dark:text-primary-400"
-                                />
+                            <div class="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-gray-200 dark:border-gray-700">
+                                <div x-html="blockMetadata[blockClass]?.iconSvg || ''" class="w-6 h-6 text-primary-600 dark:text-primary-400"></div>
                             </div>
 
-                            <div class="flex-1">
-                                <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1" x-text="getBlockLabel(blockClass)"></h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2" x-text="getBlockDescription(blockClass)"></p>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1" x-text="blockMetadata[blockClass]?.label || blockClass"></h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2" x-text="blockMetadata[blockClass]?.description || ''"></p>
                             </div>
                         </button>
                     </template>
