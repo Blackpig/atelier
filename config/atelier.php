@@ -47,11 +47,21 @@ return [
     | Block Registration
     |--------------------------------------------------------------------------
     |
-    | Automatically discovered blocks will be registered here. You can also
-    | manually register custom blocks by adding them to this array.
+    | Define the default blocks available in BlockManager components.
+    | These blocks will be used when ->blocks() is not called or called empty.
+    | Override per-resource by calling ->blocks([...]) with specific classes.
     |
     */
     'blocks' => [
+       /*  \BlackpigCreatif\Atelier\Blocks\HeroBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\TextBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\ImageBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\TextWithImageBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\GalleryBlock::class,
+        \BlackpigCreatif\Atelier\Blocks\CarouselBlock::class, */
+        \BlackpigCreatif\Atelier\Blocks\VideoBlock::class,
+        // Add custom blocks here:
         // \App\Blocks\CustomBlock::class,
     ],
     

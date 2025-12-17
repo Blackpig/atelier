@@ -154,6 +154,20 @@
                 }
             },
 
+            openBlockPreview(uuid) {
+                const block = this.blocks.find(b => b.uuid === uuid);
+
+                if (!block) {
+                    return;
+                }
+
+                // Dispatch to BlockFormModal in preview mode
+                Livewire.dispatch('openBlockPreview', {
+                    blockType: block.type,
+                    data: block.data || {}
+                });
+            },
+
             reorderBlocks(newOrder) {
                 // Reorder blocks - keep original Proxy objects
                 const reordered = newOrder.map(uuid =>

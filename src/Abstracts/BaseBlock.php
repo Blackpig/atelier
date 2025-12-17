@@ -67,7 +67,13 @@ abstract class BaseBlock
     {
         return data_get($this->data, $key, $default);
     }
-    
+
+    public function set(string $key, mixed $value): static
+    {
+        data_set($this->data, $key, $value);
+        return $this;
+    }
+
     // Get translated value for current locale
     public function getTranslated(string $key, ?string $locale = null): mixed
     {

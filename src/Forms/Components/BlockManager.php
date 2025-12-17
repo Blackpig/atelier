@@ -25,8 +25,9 @@ class BlockManager extends Field
 
     /**
      * Set the available block classes
+     * If called without arguments or with empty array, will use config('atelier.blocks')
      */
-    public function blocks(array | Closure $blockClasses): static
+    public function blocks(array | Closure $blockClasses = []): static
     {
         $this->blockClasses = $blockClasses;
         return $this;
@@ -34,10 +35,18 @@ class BlockManager extends Field
 
     /**
      * Get the registered block classes
+     * Falls back to config('atelier.blocks') if not explicitly set
      */
     public function getBlockClasses(): array
     {
-        return $this->evaluate($this->blockClasses);
+        $blocks = $this->evaluate($this->blockClasses);
+
+        // If no blocks explicitly set, use config default
+        if (empty($blocks)) {
+            $blocks = config('atelier.blocks', []);
+        }
+
+        return $blocks;
     }
 
     /**
@@ -182,6 +191,19 @@ class BlockManager extends Field
 
         // Hydrate blocks from database
         $this->afterStateHydrated(function (BlockManager $component, $state, $record) {
+            // Auto-detect if we're on a ViewRecord page and disable editing
+            try {
+                $livewire = $component->getLivewire();
+                if ($livewire instanceof \Filament\Resources\Pages\ViewRecord) {
+                    $component->editable(false);
+                    $component->deletable(false);
+                    $component->addable(false);
+                    $component->reorderable(false);
+                }
+            } catch (\Exception $e) {
+                // If we can't detect, continue with default behavior
+            }
+
             if (!$record || !method_exists($record, 'blocks')) {
                 return;
             }
@@ -311,6 +333,13 @@ class BlockManager extends Field
         if (!class_exists($blockType)) {
             return;
         }
+
+        // DEBUG: Log the raw data being saved
+        \Log::info('BlockManager::saveBlockAttributes', [
+            'block_id' => $block->id,
+            'block_type' => $blockType,
+            'raw_data' => $data,
+        ]);
 
         $translatableFields = $blockType::getTranslatableFields();
 

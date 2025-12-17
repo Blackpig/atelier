@@ -18,11 +18,14 @@ class BlockFormModal extends LivewireComponent implements HasForms
     public ?string $uuid = null;
     public ?string $componentStatePath = null;
     public bool $isOpen = false;
+    public bool $isPreview = false;
+    public ?string $previewHtml = null;
     public array $blockData = [];
 
     protected $listeners = [
         'openBlockFormModal' => 'open',
         'open-block-form-modal' => 'open',
+        'openBlockPreview' => 'openPreview',
     ];
 
     public function getListeners()
@@ -30,6 +33,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
         return [
             'openBlockFormModal' => 'open',
             'open-block-form-modal' => 'open',
+            'openBlockPreview' => 'openPreview',
         ];
     }
 
@@ -70,6 +74,8 @@ class BlockFormModal extends LivewireComponent implements HasForms
         $this->uuid = $uuid;
         $this->componentStatePath = $componentStatePath;
         $this->isOpen = true;
+        $this->isPreview = false;  // Ensure we're in form mode, not preview
+        $this->previewHtml = null;  // Clear any previous preview HTML
 
         // Let the form system initialize blockData through its statePath
         // This prevents Livewire Entangle errors
@@ -123,6 +129,8 @@ class BlockFormModal extends LivewireComponent implements HasForms
     public function close(): void
     {
         $this->isOpen = false;
+        $this->isPreview = false;
+        $this->previewHtml = null;
         $this->blockType = null;
         $this->uuid = null;
         $this->componentStatePath = null;
@@ -132,6 +140,103 @@ class BlockFormModal extends LivewireComponent implements HasForms
         $this->form->fill([]);
 
         $this->dispatch('close-modal', id: 'block-form-modal');
+    }
+
+    public function openPreview($blockType, $data = []): void
+    {
+        // Handle both array (from Livewire 3 dispatch) and individual parameters
+        if (is_array($blockType)) {
+            $params = $blockType;
+            $blockType = $params['blockType'] ?? null;
+            $data = $params['data'] ?? [];
+        }
+
+        $this->blockType = $blockType;
+        $this->isOpen = true;
+        $this->isPreview = true;
+        $this->blockData = $data;
+
+        // Generate preview HTML
+        $this->previewHtml = $this->generatePreview($blockType, $data);
+
+        $this->dispatch('open-modal', id: 'block-form-modal');
+    }
+
+    protected function generatePreview(string $blockType, array $data): string
+    {
+        if (!class_exists($blockType)) {
+            return '<div class="text-red-600 p-4">Block type not found</div>';
+        }
+
+        try {
+            // Create a new block instance
+            $block = new $blockType();
+
+            // Common sensible defaults for all block types
+            $defaults = [
+                // Hero block defaults
+                'height' => 'min-h-[600px]',
+                'text_color' => 'text-white',
+                'content_alignment' => 'text-center items-center',
+                'overlay_opacity' => '40',
+                'cta_new_tab' => false,
+
+                // Text block defaults
+                'text_alignment' => 'text-left',
+                'max_width' => 'max-w-3xl',
+
+                // Image block defaults
+                'alignment' => 'center',
+                'aspect_ratio' => 'aspect-auto',
+                'lightbox' => true,
+
+                // Gallery block defaults
+                'columns' => '3',
+                'gap' => 'gap-4',
+                'auto_rows' => false,
+
+                // Carousel block defaults
+                'autoplay' => false,
+                'show_dots' => true,
+                'show_arrows' => true,
+
+                // Video block defaults
+                'muted' => false,
+
+                // Text with image defaults
+                'image_position' => 'right',
+                'image_width' => '40',
+            ];
+
+            // Merge defaults with provided data (data overrides defaults)
+            $mergedData = array_merge($defaults, $data);
+
+            // Fill the block with merged data
+            $block->fill($mergedData);
+
+            // Get the view data
+            $viewData = $block->getViewData();
+
+            // Debug logging
+            \Log::info('BlockFormModal preview viewData', [
+                'viewData' => $viewData,
+                'blockType' => $blockType,
+            ]);
+
+            // Render the block view
+            $viewPath = $block::getViewPath();
+
+            return view($viewPath, $viewData)->render();
+        } catch (\Exception $e) {
+            \Log::error('BlockFormModal preview error', [
+                'blockType' => $blockType,
+                'data' => $data,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return '<div class="text-red-600 p-4">Error generating preview: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        }
     }
 
     public function render()
