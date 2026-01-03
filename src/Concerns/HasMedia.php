@@ -2,30 +2,29 @@
 
 namespace BlackpigCreatif\Atelier\Concerns;
 
+/**
+ * Unified media interface supporting:
+ * - Regular FileUpload (string paths or arrays)
+ * - ChambreNoir RetouchFileUpload (JSON with conversions)
+ */
 trait HasMedia
 {
-    public function getMediaUrl(string $key): ?string
+    use HasFileUpload;
+
+    /**
+     * Get media URL - delegates to FileUpload handler
+     * Supports both regular FileUpload and ChambreNoir formats
+     */
+    public function getMediaUrl(string $key, string $conversion = 'large'): ?string
     {
-        $path = $this->get($key);
-        
-        if (!$path) {
-            return null;
-        }
-        
-        // If it's an array (multiple files), get first
-        if (is_array($path)) {
-            $path = $path[0] ?? null;
-        }
-        
-        if (!$path) {
-            return null;
-        }
-        
-        return \Storage::url($path);
+        return $this->getFileUploadUrl($key, $conversion);
     }
-    
-    public function getMedia(string $key): ?string
+
+    /**
+     * Get all media URLs
+     */
+    public function getMediaUrls(string $key, string $conversion = 'large'): array
     {
-        return $this->getMediaUrl($key);
+        return $this->getFileUploadUrls($key, $conversion);
     }
 }

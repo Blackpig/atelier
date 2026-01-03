@@ -47,14 +47,6 @@
 
     {{-- Actions --}}
     <div class="flex-shrink-0 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-        {{-- Preview is always available --}}
-        <x-filament::icon-button
-            icon="heroicon-o-eye"
-            x-on:click="openBlockPreview(block.uuid)"
-            label="Preview"
-            color="gray"
-        />
-
         @if($isEditable)
             <x-filament::icon-button
                 icon="heroicon-o-pencil"

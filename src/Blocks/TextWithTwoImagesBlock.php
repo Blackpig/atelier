@@ -5,8 +5,9 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
-use Filament\Forms\Components\FileUpload;
+use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -16,22 +17,22 @@ use Illuminate\Contracts\View\View;
 class TextWithTwoImagesBlock extends BaseBlock
 {
     use HasCommonOptions, HasMedia;
-    
+
     public static function getLabel(): string
     {
         return 'Text with Two Images';
     }
-    
+
     public static function getDescription(): ?string
     {
         return 'Rich text content with two accompanying images in various layout configurations.';
     }
-    
+
     public static function getIcon(): string
     {
         return 'atelier.icons.text-two-images';
     }
-    
+
     public static function getSchema(): array
     {
         return [
@@ -43,7 +44,7 @@ class TextWithTwoImagesBlock extends BaseBlock
                                 ->label('Title')
                                 ->maxLength(255)
                                 ->placeholder('Section title (optional)'),
-                            
+
                             RichEditor::make('content')
                                 ->label('Content')
                                 ->required()
@@ -56,12 +57,12 @@ class TextWithTwoImagesBlock extends BaseBlock
                                     'h2',
                                     'h3',
                                 ]),
-                            
+
                             TextInput::make('image_1_caption')
                                 ->label('First Image Caption')
                                 ->maxLength(255)
                                 ->placeholder('Optional caption'),
-                            
+
                             TextInput::make('image_2_caption')
                                 ->label('Second Image Caption')
                                 ->maxLength(255)
@@ -70,11 +71,12 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ->columnSpanFull(),
                 ])
                 ->collapsible(),
-            
+
             Section::make('Images')
                 ->schema([
-                    FileUpload::make('image_1')
+                    RetouchMediaUpload::make('image_1')
                         ->label('First Image')
+                        ->preset(BlockGalleryConversion::class)
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
@@ -84,10 +86,12 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ->visibility('public')
                         ->acceptedFileTypes(['image/*'])
                         ->maxSize(10240)
-                        ->required(),
+                        ->required()
+                        ->hint('Auto-generates thumb, medium, and large sizes.'),
 
-                    FileUpload::make('image_2')
+                    RetouchMediaUpload::make('image_2')
                         ->label('Second Image')
+                        ->preset(BlockGalleryConversion::class)
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
@@ -97,11 +101,12 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ->visibility('public')
                         ->acceptedFileTypes(['image/*'])
                         ->maxSize(10240)
-                        ->required(),
+                        ->required()
+                        ->hint('Auto-generates thumb, medium, and large sizes.'),
                 ])
                 ->columns(2)
                 ->collapsible(),
-            
+
             Section::make('Layout')
                 ->schema([
                     Select::make('layout')
@@ -117,7 +122,7 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ])
                         ->default('images-left')
                         ->native(false),
-                    
+
                     Select::make('image_aspect')
                         ->label('Image Aspect Ratio')
                         ->options([
@@ -129,7 +134,7 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ])
                         ->default('aspect-video')
                         ->native(false),
-                    
+
                     Select::make('image_size')
                         ->label('Image Size')
                         ->options([
@@ -139,41 +144,41 @@ class TextWithTwoImagesBlock extends BaseBlock
                         ])
                         ->default('medium')
                         ->native(false)
-                        ->visible(fn($get) => in_array($get('layout'), ['images-left', 'images-right', 'images-stacked-left', 'images-stacked-right'])),
+                        ->visible(fn ($get) => in_array($get('layout'), ['images-left', 'images-right', 'images-stacked-left', 'images-stacked-right'])),
                 ])
                 ->columns(3)
                 ->collapsible(),
-            
+
             // Include common options
             ...static::getCommonOptionsSchema(),
         ];
     }
-    
+
     public static function getTranslatableFields(): array
     {
         return ['title', 'content', 'image_1_caption', 'image_2_caption'];
     }
-    
+
     public function render(): View
     {
         return view(static::getViewPath(), $this->getViewData());
     }
-    
+
     public function getImageSizeClass(): string
     {
-        return match($this->get('image_size', 'medium')) {
+        return match ($this->get('image_size', 'medium')) {
             'small' => 'md:w-[30%]',
             'medium' => 'md:w-[40%]',
             'large' => 'md:w-[50%]',
             default => 'md:w-[40%]',
         };
     }
-    
+
     public function getImage1(): ?string
     {
         return $this->getMediaUrl('image_1');
     }
-    
+
     public function getImage2(): ?string
     {
         return $this->getMediaUrl('image_2');

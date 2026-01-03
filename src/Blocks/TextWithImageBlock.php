@@ -4,8 +4,10 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
-use Filament\Forms\Components\FileUpload;
+use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -14,7 +16,7 @@ use Illuminate\Contracts\View\View;
 
 class TextWithImageBlock extends BaseBlock
 {
-    use HasCommonOptions;
+    use HasCommonOptions, HasMedia;
 
     public static function getLabel(): string
     {
@@ -58,8 +60,9 @@ class TextWithImageBlock extends BaseBlock
                         ])
                         ->columnSpanFull(),
 
-                    FileUpload::make('image')
+                    RetouchMediaUpload::make('image')
                         ->label('Image')
+                        ->preset(BlockGalleryConversion::class)
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
@@ -70,6 +73,7 @@ class TextWithImageBlock extends BaseBlock
                         ->acceptedFileTypes(['image/*'])
                         ->maxSize(5120) // 5MB
                         ->required()
+                        ->hint('Auto-generates thumb, medium, and large sizes.')
                         ->columnSpanFull(),
                 ])
                 ->collapsible(),

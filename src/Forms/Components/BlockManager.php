@@ -3,23 +3,25 @@
 namespace BlackpigCreatif\Atelier\Forms\Components;
 
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
-use BlackpigCreatif\Atelier\Models\AtelierBlockAttribute;
 use Closure;
 use Filament\Forms\Components\Field;
-use Filament\Forms\Components\Actions\Action;
 use Illuminate\Support\Str;
 
 class BlockManager extends Field
 {
     protected string $view = 'atelier::forms.components.block-manager';
 
-    protected array | Closure $blockClasses = [];
+    protected array|Closure $blockClasses = [];
 
-    protected bool | Closure $isAddable = true;
-    protected bool | Closure $isEditable = true;
-    protected bool | Closure $isDeletable = true;
-    protected bool | Closure $isReorderable = true;
-    protected bool | Closure $isCollapsible = false;
+    protected bool|Closure $isAddable = true;
+
+    protected bool|Closure $isEditable = true;
+
+    protected bool|Closure $isDeletable = true;
+
+    protected bool|Closure $isReorderable = true;
+
+    protected bool|Closure $isCollapsible = false;
 
     protected ?string $addButtonLabel = null;
 
@@ -27,9 +29,10 @@ class BlockManager extends Field
      * Set the available block classes
      * If called without arguments or with empty array, will use config('atelier.blocks')
      */
-    public function blocks(array | Closure $blockClasses = []): static
+    public function blocks(array|Closure $blockClasses = []): static
     {
         $this->blockClasses = $blockClasses;
+
         return $this;
     }
 
@@ -58,7 +61,7 @@ class BlockManager extends Field
         $metadata = [];
 
         foreach ($blockClasses as $blockClass) {
-            if (!class_exists($blockClass)) {
+            if (! class_exists($blockClass)) {
                 continue;
             }
 
@@ -84,7 +87,7 @@ class BlockManager extends Field
         // Check if it's an Atelier icon
         if (str_starts_with($icon, 'atelier.icons.')) {
             $iconName = str_replace('atelier.icons.', '', $icon);
-            $iconPath = __DIR__ . '/../../../resources/views/components/icons/' . $iconName . '.blade.php';
+            $iconPath = __DIR__.'/../../../resources/views/components/icons/'.$iconName.'.blade.php';
 
             if (file_exists($iconPath)) {
                 return file_get_contents($iconPath);
@@ -98,9 +101,10 @@ class BlockManager extends Field
     /**
      * Configure addability
      */
-    public function addable(bool | Closure $condition = true): static
+    public function addable(bool|Closure $condition = true): static
     {
         $this->isAddable = $condition;
+
         return $this;
     }
 
@@ -112,9 +116,10 @@ class BlockManager extends Field
     /**
      * Configure editability
      */
-    public function editable(bool | Closure $condition = true): static
+    public function editable(bool|Closure $condition = true): static
     {
         $this->isEditable = $condition;
+
         return $this;
     }
 
@@ -126,9 +131,10 @@ class BlockManager extends Field
     /**
      * Configure deletability
      */
-    public function deletable(bool | Closure $condition = true): static
+    public function deletable(bool|Closure $condition = true): static
     {
         $this->isDeletable = $condition;
+
         return $this;
     }
 
@@ -140,9 +146,10 @@ class BlockManager extends Field
     /**
      * Configure reorderability
      */
-    public function reorderable(bool | Closure $condition = true): static
+    public function reorderable(bool|Closure $condition = true): static
     {
         $this->isReorderable = $condition;
+
         return $this;
     }
 
@@ -154,9 +161,10 @@ class BlockManager extends Field
     /**
      * Configure collapsibility
      */
-    public function collapsible(bool | Closure $condition = true): static
+    public function collapsible(bool|Closure $condition = true): static
     {
         $this->isCollapsible = $condition;
+
         return $this;
     }
 
@@ -171,6 +179,7 @@ class BlockManager extends Field
     public function addButtonLabel(?string $label): static
     {
         $this->addButtonLabel = $label;
+
         return $this;
     }
 
@@ -191,6 +200,11 @@ class BlockManager extends Field
 
         // Hydrate blocks from database
         $this->afterStateHydrated(function (BlockManager $component, $state, $record) {
+            \Log::info('BlockManager: afterStateHydrated started', [
+                'has_record' => (bool) $record,
+                'record_id' => $record?->id,
+            ]);
+
             // Auto-detect if we're on a ViewRecord page and disable editing
             try {
                 $livewire = $component->getLivewire();
@@ -204,7 +218,8 @@ class BlockManager extends Field
                 // If we can't detect, continue with default behavior
             }
 
-            if (!$record || !method_exists($record, 'blocks')) {
+            if (! $record || ! method_exists($record, 'blocks')) {
+                \Log::warning('BlockManager: Hydration stopped - no record or blocks method');
                 return;
             }
 
@@ -213,8 +228,13 @@ class BlockManager extends Field
                 ->with('attributes')
                 ->get();
 
+            \Log::info('BlockManager: Loaded blocks from database', [
+                'blocks_count' => $blocks->count(),
+            ]);
+
             if ($blocks->isEmpty()) {
                 $component->state([]);
+                \Log::info('BlockManager: No blocks found, setting empty state');
                 return;
             }
 
@@ -222,6 +242,14 @@ class BlockManager extends Field
 
             foreach ($blocks as $block) {
                 $extractedData = $component->extractBlockAttributes($block);
+
+                \Log::info('BlockManager: Extracted block data', [
+                    'block_id' => $block->id,
+                    'uuid' => $block->uuid,
+                    'type' => $block->block_type,
+                    'extracted_data_keys' => array_keys($extractedData),
+                    'extracted_data' => $extractedData,
+                ]);
 
                 $blockData[] = [
                     'uuid' => $block->uuid,
@@ -232,45 +260,97 @@ class BlockManager extends Field
                 ];
             }
 
+            \Log::info('BlockManager: Setting hydrated state', [
+                'total_blocks' => count($blockData),
+            ]);
+
             $component->state($blockData);
         });
 
         // Save blocks to database
         $this->saveRelationshipsUsing(function ($component, $state) {
+            \Log::info('BlockManager: saveRelationshipsUsing started', [
+                'state_count' => count($state ?? []),
+                'state' => $state,
+            ]);
+
             $record = $component->getRecord();
 
-            if (!$record || !method_exists($record, 'blocks')) {
+            if (! $record || ! method_exists($record, 'blocks')) {
+                \Log::warning('BlockManager: Record missing or no blocks() method', [
+                    'has_record' => (bool) $record,
+                    'record_class' => $record ? get_class($record) : null,
+                ]);
                 return;
             }
 
             // Get current block UUIDs from state
             $currentUuids = collect($state ?? [])->pluck('uuid')->filter()->toArray();
 
+            \Log::info('BlockManager: Current UUIDs', [
+                'current_uuids' => $currentUuids,
+            ]);
+
             // Delete blocks that are no longer in state
-            $record->blocks()
-                ->whereNotIn('uuid', $currentUuids)
-                ->get()
-                ->each(function ($block) {
-                    // Delete all attributes first
-                    $block->attributes()->delete();
-                    // Delete the block
-                    $block->delete();
-                });
+            $blocksToDelete = $record->blocks()->whereNotIn('uuid', $currentUuids)->get();
+
+            \Log::info('BlockManager: Deleting orphaned blocks', [
+                'count' => $blocksToDelete->count(),
+                'uuids' => $blocksToDelete->pluck('uuid')->toArray(),
+            ]);
+
+            $blocksToDelete->each(function ($block) {
+                // Delete all attributes first
+                $block->attributes()->delete();
+                // Delete the block
+                $block->delete();
+            });
 
             // Create or update blocks
             foreach ($state ?? [] as $index => $blockData) {
-                $block = $record->blocks()->updateOrCreate(
-                    ['uuid' => $blockData['uuid']],
-                    [
-                        'block_type' => $blockData['type'],
-                        'position' => $index,
-                        'is_published' => $blockData['is_published'] ?? true,
-                    ]
-                );
+                \Log::info('BlockManager: Processing block', [
+                    'index' => $index,
+                    'uuid' => $blockData['uuid'] ?? null,
+                    'type' => $blockData['type'] ?? null,
+                    'data_keys' => array_keys($blockData['data'] ?? []),
+                ]);
 
-                // Save block attributes
-                $component->saveBlockAttributes($block, $blockData['data'] ?? [], $blockData['type']);
+                try {
+                    $block = $record->blocks()->updateOrCreate(
+                        ['uuid' => $blockData['uuid']],
+                        [
+                            'block_type' => $blockData['type'],
+                            'position' => $index,
+                            'is_published' => $blockData['is_published'] ?? true,
+                        ]
+                    );
+
+                    \Log::info('BlockManager: Block saved', [
+                        'block_id' => $block->id,
+                        'uuid' => $block->uuid,
+                        'was_recently_created' => $block->wasRecentlyCreated,
+                    ]);
+
+                    // Save block attributes
+                    $component->saveBlockAttributes($block, $blockData['data'] ?? [], $blockData['type']);
+
+                    \Log::info('BlockManager: Attributes saved for block', [
+                        'block_id' => $block->id,
+                        'attribute_count' => $block->attributes()->count(),
+                    ]);
+
+                } catch (\Exception $e) {
+                    \Log::error('BlockManager: Error saving block', [
+                        'uuid' => $blockData['uuid'] ?? null,
+                        'type' => $blockData['type'] ?? null,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    throw $e;
+                }
             }
+
+            \Log::info('BlockManager: saveRelationshipsUsing completed successfully');
         });
 
         // Dehydrate - ensure state is always set before saving
@@ -284,7 +364,7 @@ class BlockManager extends Field
     {
         $blockClass = $block->block_type;
 
-        if (!class_exists($blockClass)) {
+        if (! class_exists($blockClass)) {
             return [];
         }
 
@@ -330,63 +410,86 @@ class BlockManager extends Field
      */
     protected function saveBlockAttributes(AtelierBlock $block, array $data, string $blockType): void
     {
-        if (!class_exists($blockType)) {
+        \Log::info('BlockManager: saveBlockAttributes started', [
+            'block_id' => $block->id,
+            'block_type' => $blockType,
+            'data_keys' => array_keys($data),
+            'data' => $data,
+        ]);
+
+        if (! class_exists($blockType)) {
+            \Log::error('BlockManager: Block type class not found', [
+                'block_type' => $blockType,
+            ]);
             return;
         }
 
-        // DEBUG: Log the raw data being saved
-        \Log::info('BlockManager::saveBlockAttributes', [
-            'block_id' => $block->id,
-            'block_type' => $blockType,
-            'raw_data' => $data,
-        ]);
-
         $translatableFields = $blockType::getTranslatableFields();
 
+        \Log::info('BlockManager: Translatable fields', [
+            'translatable_fields' => $translatableFields,
+        ]);
+
         // Delete existing attributes
+        $deletedCount = $block->attributes()->count();
         $block->attributes()->delete();
+
+        \Log::info('BlockManager: Deleted existing attributes', [
+            'count' => $deletedCount,
+        ]);
 
         $sortOrder = 0;
         $defaultLocale = config('atelier.default_locale', 'en');
+        $createdAttributesCount = 0;
 
         foreach ($data as $key => $value) {
-            // Extract file paths if this is a file upload field
-            if ($this->isFileUploadValue($value)) {
-                $value = $this->extractFilePath($value);
+            // Skip if value is null or empty string
+            if ($value === null || $value === '') {
+                \Log::debug('BlockManager: Skipping null/empty value', [
+                    'key' => $key,
+                ]);
+                continue;
             }
 
             if (in_array($key, $translatableFields)) {
                 // Translatable field - MUST be saved with locale keys
+                \Log::debug('BlockManager: Processing translatable field', [
+                    'key' => $key,
+                    'is_array' => is_array($value),
+                ]);
 
                 // If value is not an array, wrap it in default locale
-                if (!is_array($value)) {
+                if (! is_array($value)) {
                     $value = [$defaultLocale => $value];
-                } elseif (!empty($value) && !$this->isLocaleKeyedArray($value)) {
-                    // It's an array but not locale-keyed (might be file upload array)
-                    // Keep as is if it's a file upload, otherwise wrap in default locale
-                    if (!$this->isFileUploadValue($value)) {
-                        $value = [$defaultLocale => $value];
-                    }
+                } elseif (! empty($value) && ! $this->isLocaleKeyedArray($value)) {
+                    // It's an array but not locale-keyed, wrap in default locale
+                    $value = [$defaultLocale => $value];
                 }
 
                 // Create one attribute per locale
                 foreach ($value as $locale => $localeValue) {
                     if ($localeValue !== null && $localeValue !== '') {
-                        // Handle file uploads in translatable fields
-                        if ($this->isFileUploadValue($localeValue)) {
-                            $localeValue = $this->extractFilePath($localeValue);
-                        }
-
                         $this->createAttribute($block, $key, $localeValue, $locale, true, $sortOrder++);
+                        $createdAttributesCount++;
                     }
                 }
             } else {
                 // Non-translatable field - single attribute without locale
-                if ($value !== null && $value !== '') {
-                    $this->createAttribute($block, $key, $value, null, false, $sortOrder++);
-                }
+                \Log::debug('BlockManager: Processing non-translatable field', [
+                    'key' => $key,
+                    'value_type' => gettype($value),
+                ]);
+
+                $this->createAttribute($block, $key, $value, null, false, $sortOrder++);
+                $createdAttributesCount++;
             }
         }
+
+        \Log::info('BlockManager: saveBlockAttributes completed', [
+            'block_id' => $block->id,
+            'created_attributes' => $createdAttributesCount,
+            'final_attribute_count' => $block->attributes()->count(),
+        ]);
 
         // Clear block cache
         $block->clearCache();
@@ -397,7 +500,7 @@ class BlockManager extends Field
      */
     protected function isLocaleKeyedArray($value): bool
     {
-        if (!is_array($value) || empty($value)) {
+        if (! is_array($value) || empty($value)) {
             return false;
         }
 
@@ -405,59 +508,12 @@ class BlockManager extends Field
 
         // Check if all keys are valid locale codes
         foreach (array_keys($value) as $key) {
-            if (!in_array($key, $availableLocales)) {
+            if (! in_array($key, $availableLocales)) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    /**
-     * Check if a value looks like a file upload value
-     */
-    protected function isFileUploadValue($value): bool
-    {
-        if (!is_array($value)) {
-            return false;
-        }
-
-        // Check if it's the {"uuid":"path"} format from file uploads
-        foreach ($value as $key => $val) {
-            // File upload format has UUID keys and path values
-            if (is_string($key) && is_string($val) &&
-                preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $key) &&
-                str_contains($val, '/')) {
-                return true;
-            }
-            // Also check for simple array of paths ["path1", "path2"]
-            if (is_numeric($key) && is_string($val) && str_contains($val, '/')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Extract actual file paths from Livewire temporary upload format
-     * Always returns array format for FileUpload compatibility
-     */
-    protected function extractFilePath($value)
-    {
-        if (!is_array($value)) {
-            return is_string($value) && $value !== '' ? [$value] : null;
-        }
-
-        // Handle {"uuid":"path"} format - extract the paths
-        $paths = [];
-        foreach ($value as $key => $val) {
-            if (is_string($val) && str_contains($val, '/')) {
-                $paths[] = $val;
-            }
-        }
-
-        return !empty($paths) ? $paths : null;
     }
 
     /**
@@ -472,7 +528,7 @@ class BlockManager extends Field
         int $sortOrder
     ): void {
         // Determine type
-        $type = match(true) {
+        $type = match (true) {
             is_int($value) => 'integer',
             is_float($value) => 'float',
             is_bool($value) => 'boolean',
@@ -481,6 +537,7 @@ class BlockManager extends Field
         };
 
         // Convert arrays to JSON
+        $originalValue = $value;
         if (is_array($value)) {
             $value = json_encode($value);
         }
@@ -490,14 +547,36 @@ class BlockManager extends Field
             $value = $value ? '1' : '0';
         }
 
-        $block->attributes()->create([
-            'key' => $key,
-            'value' => (string) $value,
-            'type' => $type,
-            'locale' => $locale,
-            'translatable' => $translatable,
-            'sort_order' => $sortOrder,
-        ]);
+        try {
+            $attribute = $block->attributes()->create([
+                'key' => $key,
+                'value' => (string) $value,
+                'type' => $type,
+                'locale' => $locale,
+                'translatable' => $translatable,
+                'sort_order' => $sortOrder,
+            ]);
+
+            \Log::debug('BlockManager: Attribute created', [
+                'attribute_id' => $attribute->id,
+                'key' => $key,
+                'type' => $type,
+                'locale' => $locale,
+                'translatable' => $translatable,
+                'value_length' => strlen($value),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('BlockManager: Failed to create attribute', [
+                'block_id' => $block->id,
+                'key' => $key,
+                'type' => $type,
+                'locale' => $locale,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
     }
 
     /**

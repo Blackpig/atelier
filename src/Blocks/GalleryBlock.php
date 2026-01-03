@@ -4,8 +4,10 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
+use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
-use Filament\Forms\Components\FileUpload;
+use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -15,7 +17,7 @@ use Illuminate\Contracts\View\View;
 
 class GalleryBlock extends BaseBlock
 {
-    use HasCommonOptions;
+    use HasCommonOptions, HasMedia;
 
     public static function getLabel(): string
     {
@@ -46,8 +48,9 @@ class GalleryBlock extends BaseBlock
                         ])
                         ->columnSpanFull(),
 
-                    FileUpload::make('images')
+                    RetouchMediaUpload::make('images')
                         ->label('Images')
+                        ->preset(BlockGalleryConversion::class)
                         ->image()
                         ->imageEditor()
                         ->multiple()
@@ -57,11 +60,10 @@ class GalleryBlock extends BaseBlock
                         ->directory('blocks/gallery')
                         ->visibility('public')
                         ->acceptedFileTypes(['image/*'])
-                        ->maxSize(5120) // 5MB
                         ->required()
                         ->minFiles(3)
                         ->maxFiles(50)
-                        ->helperText('Upload 3-50 images for the gallery')
+                        ->helperText('Upload 3-50 images. Each image auto-generates thumb, medium, and large sizes.')
                         ->columnSpanFull(),
                 ])
                 ->collapsible(),

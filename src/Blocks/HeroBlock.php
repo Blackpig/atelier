@@ -5,10 +5,10 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Conversions\BlockHeroConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
-use Filament\Forms\Components\FileUpload;
+use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -19,22 +19,22 @@ use Illuminate\Contracts\View\View;
 class HeroBlock extends BaseBlock
 {
     use HasCommonOptions, HasMedia;
-    
+
     public static function getLabel(): string
     {
         return 'Hero Section';
     }
-    
+
     public static function getDescription(): ?string
     {
         return 'Full-width hero section with background image, headline, and call-to-action.';
     }
-    
+
     public static function getIcon(): string
     {
         return 'atelier.icons.hero';
     }
-    
+
     public static function getSchema(): array
     {
         return [
@@ -67,20 +67,21 @@ class HeroBlock extends BaseBlock
                         ->columnSpanFull(),
                 ])
                 ->collapsible(),
-            
+
             Section::make('Settings')
                 ->schema([
                     TextInput::make('cta_url')
                         ->label('Button URL')
                         ->url()
                         ->placeholder('https://example.com/signup'),
-                    
+
                     Toggle::make('cta_new_tab')
                         ->label('Open in new tab')
                         ->default(false),
-                    
-                        FileUpload::make('background_image')
+
+                    RetouchMediaUpload::make('background_image')
                         ->label('Background Image')
+                        ->preset(BlockHeroConversion::class)
                         ->image()
                         ->imageEditor()
                         ->maxFiles(1)
@@ -91,9 +92,9 @@ class HeroBlock extends BaseBlock
                         ->downloadable()
                         ->acceptedFileTypes(['image/*'])
                         ->maxSize(10240) // 10MB
-                        ->hint('Recommended: 1920x1080px or larger')
+                        ->hint('Recommended: 1920x1080px or larger. Auto-generates thumb (200x200), medium (800x600), and large (1920x1080) sizes.')
                         ->columnSpanFull(),
-                    
+
                     Group::make([
                         Select::make('overlay_opacity')
                             ->label('Overlay Opacity')
@@ -107,7 +108,7 @@ class HeroBlock extends BaseBlock
                             ->default('40')
                             ->native(false)
                             ->helperText('Darkens the background image for better text readability'),
-                        
+
                         Select::make('text_color')
                             ->label('Text Color')
                             ->options([
@@ -118,7 +119,7 @@ class HeroBlock extends BaseBlock
                             ->default('text-white')
                             ->native(false),
                     ]),
-                    
+
                     Group::make([
                         Select::make('height')
                             ->label('Section Height')
@@ -130,7 +131,7 @@ class HeroBlock extends BaseBlock
                             ])
                             ->default('min-h-[600px]')
                             ->native(false),
-                        
+
                         Select::make('content_alignment')
                             ->label('Content Alignment')
                             ->options([
@@ -143,30 +144,30 @@ class HeroBlock extends BaseBlock
                     ]),
                 ])
                 ->collapsible(),
-            
+
             // Include common options
             ...static::getCommonOptionsSchema(),
         ];
     }
-    
+
     public static function getTranslatableFields(): array
     {
         return ['headline', 'subheadline', 'description', 'cta_text'];
     }
-    
+
     public function render(): View
     {
         return view(static::getViewPath(), $this->getViewData());
     }
-    
+
     public function getOverlayClass(): string
     {
         $opacity = $this->get('overlay_opacity', '40');
-        
+
         if ($opacity === '0') {
             return '';
         }
-        
+
         return "bg-black/[0.{$opacity}]";
     }
 }

@@ -65,15 +65,20 @@
                 // Sync Alpine state to Livewire before ANY commit (Edit/Create/Update)
                 // This handles block edits/additions, reordering syncs immediately
                 Livewire.hook('commit', ({ component }) => {
+                    console.log('⚡ Livewire commit hook fired', { needsSync: this.needsSync, blocksCount: this.blocks.length });
                     if (this.needsSync) {
+                        console.log('🔄 Syncing blocks to Livewire state', { statePath, blocks: getBlocks() });
                         wire.set(statePath, getBlocks());
                         setNeedsSyncFalse();
+                        console.log('✅ Sync complete, needsSync set to false');
                     }
                 });
             },
 
             handleBlockSaved(event) {
                 const { uuid, type, data } = event;
+
+                console.log('🎯 handleBlockSaved called', { uuid, type, data });
 
                 // Find existing block or add new one
                 const existingIndex = this.blocks.findIndex(b => b.uuid === uuid);
@@ -84,6 +89,7 @@
                         ...this.blocks[existingIndex],
                         data: data,
                     });
+                    console.log('✏️ Updated existing block at index', existingIndex);
                 } else {
                     // Add new block
                     this.blocks.push({
@@ -93,6 +99,7 @@
                         position: this.blocks.length,
                         is_published: true,
                     });
+                    console.log('➕ Added new block, total blocks:', this.blocks.length);
                 }
 
                 this.reindexBlocks();
@@ -100,6 +107,7 @@
                 // Mark that we need to sync, but don't do it now (causes re-render)
                 // Will sync when form is submitted via Livewire.hook('commit')
                 this.needsSync = true;
+                console.log('🔄 needsSync set to true, blocks array:', this.blocks);
             },
 
             openAddBlockModal() {
