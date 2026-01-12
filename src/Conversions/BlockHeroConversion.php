@@ -55,4 +55,36 @@ class BlockHeroConversion extends BaseConversion
             ],
         ];
     }
+
+    /**
+     * Override responsive configuration for hero images
+     * Defines media queries for picture element and srcset behavior
+     */
+    public function getResponsiveConfig(): array
+    {
+        return [
+            // Default fallback image
+            'default' => 'large',
+
+            // Srcset configuration (all conversions included)
+            'srcset' => [
+                'thumb' => true,
+                'medium' => true,
+                'large' => true,
+                'desktop' => true,
+                'mobile' => false, // Don't include mobile in srcset (used in picture)
+            ],
+
+            // Picture element configuration with media queries
+            'picture' => [
+                'desktop' => '(min-width: 1024px)',
+                'medium' => '(min-width: 768px)',
+                'mobile' => '(max-width: 767px)',
+                'thumb' => null, // Fallback img
+            ],
+
+            // Auto-generated sizes attribute (can be overridden)
+            'sizes' => '(min-width: 1024px) 1920px, (min-width: 768px) 800px, 768px',
+        ];
+    }
 }

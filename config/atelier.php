@@ -89,12 +89,12 @@ return [
         'spacing' => [
             'enabled' => true,
             'options' => [
-                'none' => ['label' => 'None', 'class' => ''],
-                'xs' => ['label' => 'Extra Small', 'class' => 'py-4'],
-                'sm' => ['label' => 'Small', 'class' => 'py-8'],
-                'md' => ['label' => 'Medium', 'class' => 'py-16'],
-                'lg' => ['label' => 'Large', 'class' => 'py-24'],
-                'xl' => ['label' => 'Extra Large', 'class' => 'py-32'],
+                'none' => ['label' => 'None', 'value' => 0],
+                'xs' => ['label' => 'Extra Small', 'value' => 4],
+                'sm' => ['label' => 'Small', 'value' => 8],
+                'md' => ['label' => 'Medium', 'value' => 16],
+                'lg' => ['label' => 'Large', 'value' => 24],
+                'xl' => ['label' => 'Extra Large', 'value' => 32],
             ],
         ],
         
@@ -107,28 +107,21 @@ return [
                 'full' => ['label' => 'Full Width', 'class' => 'w-full px-4'],
             ],
         ],
-    ],
-    
-    /*
-    |--------------------------------------------------------------------------
-    | Media Library
-    |--------------------------------------------------------------------------
-    |
-    | Configure Spatie Media Library settings for block media.
-    |
-    */
-    'media' => [
-        'collections' => [
-            'default' => 'blocks',
-            'hero' => 'hero-backgrounds',
-        ],
-        'conversions' => [
-            'thumb' => ['width' => 350, 'height' => 350],
-            'medium' => ['width' => 800, 'height' => 600],
-            'large' => ['width' => 1920, 'height' => 1080],
+
+        'dividers' => [
+            'enabled' => true,
+            'options' => [
+                'none' => ['label' => 'None', 'class' => ''],
+                'diagonal-left-right' => ['label' => 'Diagonal (Bottom Left to Top Right)', 'class' => 'atelier-divider-diagonal-lr'],
+                'diagonal-right-left' => ['label' => 'Diagonal (Bottom Right to Top Left)', 'class' => 'atelier-divider-diagonal-rl'],
+                'curve-up' => ['label' => 'Curved Line Up', 'class' => 'atelier-divider-curve-up'],
+                'curve-down' => ['label' => 'Curved Line Down', 'class' => 'atelier-divider-curve-down'],
+                'wave' => ['label' => 'Wave', 'class' => 'atelier-divider-wave'],
+                'triangle' => ['label' => 'Triangle', 'class' => 'atelier-divider-triangle'],
+            ],
         ],
     ],
-    
+     
     /*
     |--------------------------------------------------------------------------
     | Caching

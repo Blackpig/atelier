@@ -5,7 +5,7 @@ namespace BlackpigCreatif\Atelier\Forms\Components\Actions;
 use Closure;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Component;
-use Filament\Forms\Get;
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Str;
 
 class ManageBlocksAction extends Action

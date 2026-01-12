@@ -4,9 +4,9 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Concerns\HasMedia;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
+use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -17,7 +17,7 @@ use Illuminate\Contracts\View\View;
 
 class GalleryBlock extends BaseBlock
 {
-    use HasCommonOptions, HasMedia;
+    use HasCommonOptions, HasRetouchMedia;
 
     public static function getLabel(): string
     {
@@ -51,7 +51,6 @@ class GalleryBlock extends BaseBlock
                     RetouchMediaUpload::make('images')
                         ->label('Images')
                         ->preset(BlockGalleryConversion::class)
-                        ->image()
                         ->imageEditor()
                         ->multiple()
                         ->reorderable()

@@ -238,25 +238,13 @@ class BlockFormModal extends LivewireComponent implements HasForms
             // Merge defaults with provided data (data overrides defaults)
             $mergedData = array_merge($defaults, $data);
 
-            // Remove metadata fields and Spatie media UUIDs for preview
-            // These cause issues during preview when media isn't accessible yet
+            // Remove metadata fields for preview
+            // These cause issues during preview when not yet saved
             foreach (array_keys($mergedData) as $key) {
                 // Remove metadata fields
                 if (str_starts_with($key, '_') &&
                     (str_contains($key, '_type') || str_contains($key, '_attribute_id') || str_contains($key, '_collection'))) {
                     unset($mergedData[$key]);
-                }
-
-                // Remove Spatie media UUID arrays (preview can't display them)
-                // Check if value is array of UUIDs
-                if (isset($mergedData[$key]) && is_array($mergedData[$key]) && !empty($mergedData[$key])) {
-                    $firstItem = reset($mergedData[$key]);
-                    if (is_string($firstItem) &&
-                        preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $firstItem) &&
-                        !str_contains($firstItem, '/')) {
-                        // This is a Spatie media UUID array - remove it for preview
-                        unset($mergedData[$key]);
-                    }
                 }
             }
 

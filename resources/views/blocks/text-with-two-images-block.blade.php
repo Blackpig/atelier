@@ -2,7 +2,7 @@
 @php
     /**
      * Text with Two Images Block Template
-     * 
+     *
      * Available Variables:
      * @var \BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock $block - The block instance
      * @var string|null $title - Translated title
@@ -12,7 +12,7 @@
      * @var string $layout - Layout style (images-left, images-right, etc.)
      * @var string $image_aspect - Image aspect ratio class
      * @var string $image_size - Image size (small, medium, large)
-     * 
+     *
      * Layout Options:
      * - images-left: Images stacked vertically on left, text on right
      * - images-right: Images stacked vertically on right, text on left
@@ -21,11 +21,11 @@
      * - images-top: Images side-by-side above text
      * - images-bottom: Images side-by-side below text
      * - masonry: Mixed grid layout
-     * 
+     *
      * Helper Methods:
      * @method string $block->getImageSizeClass() - Get responsive width class for images
-     * @method \Spatie\MediaLibrary\MediaCollections\Models\Media|null $block->getImage1()
-     * @method \Spatie\MediaLibrary\MediaCollections\Models\Media|null $block->getImage2()
+     * @method string|null $block->getImage1() - Get URL for first image
+     * @method string|null $block->getImage2() - Get URL for second image
      */
 @endphp
 

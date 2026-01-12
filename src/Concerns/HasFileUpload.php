@@ -2,27 +2,18 @@
 
 namespace BlackpigCreatif\Atelier\Concerns;
 
-use BlackpigCreatif\ChambreNoir\Services\ConversionManager;
-
 /**
- * Handles simple FileUpload fields (stores paths as strings/arrays)
- * Also supports ChambreNoir RetouchFileUpload format
+ * Handles standard Filament FileUpload fields
+ * Stores paths as strings or arrays
  */
 trait HasFileUpload
 {
-    public function getFileUploadUrl(string $key, string $conversion = 'large'): ?string
+    public function getFileUploadUrl(string $key): ?string
     {
         $path = $this->get($key);
 
         if (! $path) {
             return null;
-        }
-
-        // Handle ChambreNoir JSON format: {"original": "path", "conversions": {...}}
-        if (is_array($path) && isset($path['original'])) {
-            $manager = app(ConversionManager::class);
-
-            return $manager->getUrl($path, $conversion, 'public');
         }
 
         // Handle array formats from FileUpload (UUID-keyed arrays)
@@ -50,21 +41,12 @@ trait HasFileUpload
     /**
      * Get all file upload URLs for a field (for multiple file uploads)
      */
-    public function getFileUploadUrls(string $key, string $conversion = 'large'): array
+    public function getFileUploadUrls(string $key): array
     {
         $paths = $this->get($key);
 
         if (! $paths) {
             return [];
-        }
-
-        // Handle ChambreNoir JSON format: {"original": "path", "conversions": {...}}
-        if (is_array($paths) && isset($paths['original'])) {
-            // Single image in ChambreNoir format
-            $manager = app(ConversionManager::class);
-            $url = $manager->getUrl($paths, $conversion, 'public');
-
-            return $url ? [$url] : [];
         }
 
         // If it's not an array, make it one

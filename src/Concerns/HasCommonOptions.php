@@ -6,28 +6,44 @@ use Filament\Schemas\Components\Section;
 
 trait HasCommonOptions
 {
-    use HasBackground, HasSpacing, HasWidth;
+    use HasBackground, HasSpacing, HasWidth, HasDivider;
     
     public static function getCommonOptionsSchema(): array
     {
         $fields = [];
-        
+
         if (config('atelier.features.backgrounds.enabled')) {
             $fields[] = static::getBackgroundField();
         }
-        
+
         if (config('atelier.features.spacing.enabled')) {
-            $fields[] = static::getSpacingField();
+            $spacingFields = static::getSpacingField();
+            // Handle both single field and array of fields
+            if (is_array($spacingFields)) {
+                $fields = array_merge($fields, $spacingFields);
+            } else {
+                $fields[] = $spacingFields;
+            }
         }
-        
+
         if (config('atelier.features.width.enabled')) {
             $fields[] = static::getWidthField();
         }
-        
+
+        if (config('atelier.features.dividers.enabled')) {
+            $dividerFields = static::getDividerField();
+            // Handle both single field and array of fields
+            if (is_array($dividerFields)) {
+                $fields = array_merge($fields, $dividerFields);
+            } else {
+                $fields[] = $dividerFields;
+            }
+        }
+
         if (empty($fields)) {
             return [];
         }
-        
+
         return [
             Section::make('Display Options')
                 ->schema($fields)

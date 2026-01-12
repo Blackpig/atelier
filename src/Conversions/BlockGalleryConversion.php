@@ -41,4 +41,33 @@ class BlockGalleryConversion extends BaseConversion
             ],
         ];
     }
+
+    /**
+     * Override responsive configuration for gallery images
+     * Defines media queries for picture element and srcset behavior
+     */
+    public function getResponsiveConfig(): array
+    {
+        return [
+            // Default fallback image
+            'default' => 'medium',
+
+            // Srcset configuration (all conversions included)
+            'srcset' => [
+                'thumb' => true,
+                'medium' => true,
+                'large' => true,
+            ],
+
+            // Picture element configuration with media queries
+            'picture' => [
+                'large' => '(min-width: 1024px)',
+                'medium' => '(min-width: 640px)',
+                'thumb' => null, // Fallback img
+            ],
+
+            // Auto-generated sizes attribute (can be overridden)
+            'sizes' => '(min-width: 1024px) 1600px, (min-width: 640px) 800px, 200px',
+        ];
+    }
 }

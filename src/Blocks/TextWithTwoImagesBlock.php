@@ -4,9 +4,9 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Concerns\HasMedia;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
+use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -16,7 +16,7 @@ use Illuminate\Contracts\View\View;
 
 class TextWithTwoImagesBlock extends BaseBlock
 {
-    use HasCommonOptions, HasMedia;
+    use HasCommonOptions, HasRetouchMedia;
 
     public static function getLabel(): string
     {
@@ -77,7 +77,6 @@ class TextWithTwoImagesBlock extends BaseBlock
                     RetouchMediaUpload::make('image_1')
                         ->label('First Image')
                         ->preset(BlockGalleryConversion::class)
-                        ->image()
                         ->imageEditor()
                         ->maxFiles(1)
                         ->deletable(true)
@@ -92,7 +91,6 @@ class TextWithTwoImagesBlock extends BaseBlock
                     RetouchMediaUpload::make('image_2')
                         ->label('Second Image')
                         ->preset(BlockGalleryConversion::class)
-                        ->image()
                         ->imageEditor()
                         ->maxFiles(1)
                         ->deletable(true)

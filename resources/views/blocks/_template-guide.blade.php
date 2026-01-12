@@ -9,7 +9,7 @@ AVAILABLE IN ALL TEMPLATES:
 ---------------------------
 - $block: The block instance with helper methods
 - $block->getTranslated('field'): Get translated field value
-- $block->getMedia('field'): Get Spatie Media Library item
+- $block->getFileUploadUrl('field'): Get file URL for uploaded images
 - $block->getWrapperClasses(): Background/spacing classes
 - $block->getContainerClasses(): Width constraint classes
 - $block->blockId: Unique block ID
@@ -108,13 +108,13 @@ Always use $block->getTranslated('field_name') for translatable content:
 
 MEDIA:
 ------
-Get media items:
-- $image = $block->getMedia('image_field')
-- $url = $block->getMediaUrl('image_field', 'large')
+Get file URLs for uploaded images:
+- $url = $block->getFileUploadUrl('image_field')
+- $urls = $block->getFileUploadUrls('image_field') // for multiple files
 
-Display media:
-@if($image = $block->getMedia('image_field'))
-    <img src="{{ $image->getUrl('large') }}" 
+Display images:
+@if($imageUrl = $block->getFileUploadUrl('image_field'))
+    <img src="{{ $imageUrl }}"
          alt="{{ $block->getTranslated('alt_text') }}"
          loading="lazy">
 @endif

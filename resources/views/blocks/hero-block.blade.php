@@ -2,7 +2,7 @@
 @php
     /**
      * Hero Block Template
-     * 
+     *
      * Available Variables:
      * @var \BlackpigCreatif\Atelier\Blocks\HeroBlock $block - The block instance
      * @var string|null $headline - Translated headline text
@@ -15,18 +15,23 @@
      * @var string $text_color - Text color class (e.g., 'text-white')
      * @var string $content_alignment - Content alignment classes
      * @var string $overlay_opacity - Overlay opacity value (0-80)
-     * 
+     *
      * Helper Methods:
      * @method string $block->getTranslated(string $field) - Get translated value for field
-     * @method \Spatie\MediaLibrary\MediaCollections\Models\Media|null $block->getMedia(string $field) - Get media item
+     * @method string|null $block->getFileUploadUrl(string $field) - Get file URL for field
      * @method string $block->getWrapperClasses() - Get wrapper classes (background, spacing)
      * @method string $block->getContainerClasses() - Get container classes (width)
      * @method string $block->getOverlayClass() - Get overlay darkness class
+     * @method string $block::getBlockIdentifier() - Get block identifier (e.g., 'hero-block')
+     * @method string|null $block->getDividerComponent() - Get divider component name
+     * @method string|null $block->getDividerToBackground() - Get divider target background class
      */
+
+    $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
 @endphp
 
-<section class="atelier-hero relative {{ $height }} overflow-hidden {{ $block->getWrapperClasses() }}" 
-         data-block-type="hero"
+<section class="{{ $blockIdentifier }} relative {{ $height }} overflow-hidden {{ $block->getWrapperClasses() }}"
+         data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
     
     {{-- Background Image Layer --}}
@@ -99,6 +104,14 @@
             </div>
         </div>
     </div>
+
+    {{-- Block Divider --}}
+    @if($block->getDividerComponent())
+        <x-dynamic-component
+            :component="$block->getDividerComponent()"
+            :to-background="$block->getDividerToBackground()"
+        />
+    @endif
 </section>
 
 {{-- Optional: Add smooth animations --}}

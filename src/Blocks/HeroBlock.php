@@ -4,9 +4,9 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Concerns\HasMedia;
 use BlackpigCreatif\Atelier\Conversions\BlockHeroConversion;
 use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
+use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,7 +18,7 @@ use Illuminate\Contracts\View\View;
 
 class HeroBlock extends BaseBlock
 {
-    use HasCommonOptions, HasMedia;
+    use HasCommonOptions, HasRetouchMedia;
 
     public static function getLabel(): string
     {
@@ -82,7 +82,6 @@ class HeroBlock extends BaseBlock
                     RetouchMediaUpload::make('background_image')
                         ->label('Background Image')
                         ->preset(BlockHeroConversion::class)
-                        ->image()
                         ->imageEditor()
                         ->maxFiles(1)
                         ->deletable(true)
@@ -90,7 +89,6 @@ class HeroBlock extends BaseBlock
                         ->directory('blocks/hero')
                         ->visibility('public')
                         ->downloadable()
-                        ->acceptedFileTypes(['image/*'])
                         ->maxSize(10240) // 10MB
                         ->hint('Recommended: 1920x1080px or larger. Auto-generates thumb (200x200), medium (800x600), and large (1920x1080) sizes.')
                         ->columnSpanFull(),

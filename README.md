@@ -25,7 +25,6 @@ In a master's atelier, every element is placed with intention. Every detail cons
 - PHP 8.2+
 - Laravel 11.0+
 - FilamentPHP 4.0+
-- Spatie Laravel Media Library 11.0+
 
 ## Installation
 
@@ -278,15 +277,15 @@ class MyBlock extends BaseBlock
 }
 ```
 
-### HasMedia
+### HasFileUpload
 
-Simplifies Spatie Media Library integration:
+Provides file upload URL helpers for Filament FileUpload fields:
 ```php
-use BlackpigCreatif\Atelier\Concerns\HasMedia;
+use BlackpigCreatif\Atelier\Concerns\HasFileUpload;
 
 // In your block
-$image = $block->getMedia('image_field');
-$url = $block->getMediaUrl('image_field', 'large');
+$url = $block->getFileUploadUrl('image_field');
+$urls = $block->getFileUploadUrls('image_field'); // For multiple files
 ```
 
 ### HasFlexibleBlocks
