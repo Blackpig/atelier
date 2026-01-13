@@ -168,4 +168,18 @@ class HeroBlock extends BaseBlock
 
         return "bg-black/[0.{$opacity}]";
     }
+
+    public function getWrapperClasses(): string
+    {
+        // Hero block always needs relative positioning for background image/overlay
+        $classes = ['relative'];
+
+        // Add common wrapper classes (background, spacing, divider positioning)
+        $parentClasses = parent::getWrapperClasses();
+        if ($parentClasses) {
+            $classes[] = $parentClasses;
+        }
+
+        return implode(' ', array_filter($classes));
+    }
 }

@@ -47,10 +47,17 @@ Publish the config file:
 php artisan vendor:publish --tag="atelier-config"
 ```
 
-Optionally, publish the views for customization:
+Optionally, publish the block templates for customization:
 
 ```bash
-php artisan vendor:publish --tag="atelier-views"
+# Publish block templates (recommended for designers)
+php artisan vendor:publish --tag="atelier-block-templates"
+
+# Publish divider components (if you want to customize dividers)
+php artisan vendor:publish --tag="atelier-dividers"
+
+# Publish ALL views (⚠️ not recommended - may conflict with package updates)
+php artisan vendor:publish --tag="atelier-views-all"
 ```
 
 ## Quick Start
@@ -98,14 +105,24 @@ public static function form(Form $form): Form
 ### 3. Render blocks in your view
 
 ```blade
+{{-- Using the Blade directive (recommended) --}}
 <div class="page-content">
     @renderBlocks($page)
 </div>
 
-{{-- Or manually --}}
-@foreach($page->publishedBlocks as $block)
-    {!! $block->instance->render() !!}
-@endforeach
+{{-- Or manually loop through blocks --}}
+<div class="page-content">
+    @foreach($page->publishedBlocks as $block)
+        {!! $block->render() !!}
+    @endforeach
+</div>
+
+{{-- With custom locale --}}
+<div class="page-content">
+    @foreach($page->publishedBlocks as $block)
+        {!! $block->render('fr') !!}
+    @endforeach
+</div>
 ```
 
 ## Built-in Blocks
@@ -172,12 +189,49 @@ Add decorative SVG dividers between blocks:
 
 Each divider can transition to the next section's background color for seamless designs.
 
-## Creating Custom Blocks
+### Publication Status
+Every block includes a publication toggle:
+- **Published**: Block appears on the frontend (default)
+- **Unpublished**: Block is saved but hidden from public view
 
-Create a new block class:
+Use unpublished blocks for:
+- Draft content that's not ready to go live
+- Seasonal content scheduled for later
+- A/B testing different block variations
+- Content review workflows
 
 ```php
-namespace App\Blocks;
+// Only published blocks are rendered
+$page->publishedBlocks; // Returns only is_published = true
+
+// Access all blocks regardless of status
+$page->blocks; // Returns all blocks
+```
+
+## Creating Custom Blocks
+
+### Using the Artisan Command
+
+The fastest way to create a new block is using the built-in Artisan command:
+
+```bash
+php artisan make:atelier-block Quote
+```
+
+This will:
+- Create a block class at `app/Filament/Atelier/Blocks/QuoteBlock.php`
+- Create a blade template at `resources/views/vendor/atelier/blocks/quote-block.blade.php`
+- Set up basic structure with all required methods
+- Include translatable fields, common options, and divider support
+
+The command will prompt you for the block name if not provided as an argument.
+
+### Manual Block Creation
+
+Alternatively, create a new block class manually:
+
+```php
+namespace App\Filament\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
@@ -196,9 +250,16 @@ class QuoteBlock extends BaseBlock
         return 'Quote';
     }
 
-    public static function getIcon(): string
+    public static function getIcon(): string | IconSize | Htmlable | null
     {
+        // Option 1: Use a Heroicon name (string)
         return 'heroicon-o-chat-bubble-left-right';
+
+        // Option 2: Use custom SVG via HtmlString
+        // return new HtmlString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="..."/></svg>');
+
+        // Option 3: Return null for no icon
+        // return null;
     }
 
     public static function getSchema(): array
@@ -233,15 +294,24 @@ class QuoteBlock extends BaseBlock
 
     public function render(): View
     {
-        return view('blocks.quote', $this->getViewData());
+        return view(static::getViewPath(), $this->getViewData());
     }
 }
 ```
 
-Create the corresponding view in `resources/views/blocks/quote.blade.php`:
+Create the corresponding view in `resources/views/vendor/atelier/blocks/quote-block.blade.php`:
 
 ```blade
+{{-- resources/views/vendor/atelier/blocks/quote-block.blade.php --}}
 @php
+    /**
+     * Quote Block Template
+     *
+     * @var \App\Filament\Atelier\Blocks\QuoteBlock $block
+     * @var string|null $quote - Translated quote text
+     * @var string|null $author - Translated author name
+     */
+
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
 @endphp
 
@@ -251,10 +321,15 @@ Create the corresponding view in `resources/views/blocks/quote.blade.php`:
 
     <div class="{{ $block->getContainerClasses() }}">
         <blockquote class="text-2xl italic font-light text-gray-700 dark:text-gray-300">
-            <p>"{{ $block->getTranslated('quote') }}"</p>
-            <footer class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
-                — {{ $block->getTranslated('author') }}
-            </footer>
+            @if($quote = $block->getTranslated('quote'))
+                <p>"{{ $quote }}"</p>
+            @endif
+
+            @if($author = $block->getTranslated('author'))
+                <footer class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    — {{ $author }}
+                </footer>
+            @endif
         </blockquote>
     </div>
 
@@ -266,6 +341,58 @@ Create the corresponding view in `resources/views/blocks/quote.blade.php`:
         />
     @endif
 </section>
+```
+
+Then register your block in a BlockManager:
+
+```php
+BlockManager::make('blocks')
+    ->blocks([
+        \App\Filament\Atelier\Blocks\QuoteBlock::class,
+        // ... other blocks
+    ]);
+```
+
+## Block Icons
+
+Atelier supports flexible icon formats for your custom blocks. The `getIcon()` method can return:
+
+### Heroicon String (Recommended)
+Use any Heroicon name:
+
+```php
+public static function getIcon(): string | IconSize | Htmlable | null
+{
+    return 'heroicon-o-chat-bubble-left-right';
+}
+```
+
+### Custom SVG
+Use `HtmlString` for custom SVG icons:
+
+```php
+use Illuminate\Support\HtmlString;
+
+public static function getIcon(): string | IconSize | Htmlable | null
+{
+    return new HtmlString('
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        </svg>
+    ');
+}
+```
+
+**Tip:** Use `fill="currentColor"` in your SVG paths to ensure icons match the UI theme.
+
+### No Icon
+Return `null` if you don't want an icon:
+
+```php
+public static function getIcon(): string | IconSize | Htmlable | null
+{
+    return null;
+}
 ```
 
 ## Translation Support

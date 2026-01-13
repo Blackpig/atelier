@@ -42,15 +42,24 @@ trait HasDivider
     }
 
     /**
+     * Check if block has a divider
+     */
+    public function hasDivider(): bool
+    {
+        $divider = $this->get('divider', 'none');
+        return $divider !== 'none' && !empty($divider);
+    }
+
+    /**
      * Get the divider component name for dynamic component rendering
      */
     public function getDividerComponent(): ?string
     {
-        $divider = $this->get('divider', 'none');
-
-        if ($divider === 'none' || empty($divider)) {
+        if (!$this->hasDivider()) {
             return null;
         }
+
+        $divider = $this->get('divider');
 
         // Map config keys to component names
         $componentMap = [

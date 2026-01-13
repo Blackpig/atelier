@@ -26,15 +26,8 @@
             blockClasses: @js($blockClasses),
             blockMetadata: @js($blockMetadata),
             showTypeSelector: false,
-            needsSync: false,
 
             init() {
-                // Store reference to $wire for use in Livewire hooks
-                const wire = this.$wire;
-                const statePath = this.statePath;
-                const getBlocks = () => this.blocks;
-                const setNeedsSyncFalse = () => { this.needsSync = false; };
-
                 // Listen for block form saved event
                 Livewire.on('block-form-saved', (event) => {
                     if (event.componentStatePath === this.statePath) {
@@ -61,18 +54,6 @@
                         };
                     }
                 }, 100);
-
-                // Sync Alpine state to Livewire before ANY commit (Edit/Create/Update)
-                // This handles block edits/additions, reordering syncs immediately
-                Livewire.hook('commit', ({ component }) => {
-                    console.log('⚡ Livewire commit hook fired', { needsSync: this.needsSync, blocksCount: this.blocks.length });
-                    if (this.needsSync) {
-                        console.log('🔄 Syncing blocks to Livewire state', { statePath, blocks: getBlocks() });
-                        wire.set(statePath, getBlocks());
-                        setNeedsSyncFalse();
-                        console.log('✅ Sync complete, needsSync set to false');
-                    }
-                });
             },
 
             handleBlockSaved(event) {
@@ -80,14 +61,41 @@
 
                 console.log('🎯 handleBlockSaved called', { uuid, type, data });
 
+                // Extract is_published from data
+                const isPublished = data.is_published ?? true;
+                console.log('📊 Extracted is_published:', isPublished, 'from data.is_published:', data.is_published);
+
+                // Keep is_published in data for form hydration consistency
+                // It will be filtered out when saving attributes to database
+                const blockData = { ...data };
+
                 // Find existing block or add new one
                 const existingIndex = this.blocks.findIndex(b => b.uuid === uuid);
 
                 if (existingIndex !== -1) {
+                    const oldBlock = this.blocks[existingIndex];
+                    console.log('📝 BEFORE update - Block at index', existingIndex, ':', {
+                        uuid: oldBlock.uuid,
+                        is_published_block_level: oldBlock.is_published,
+                        is_published_data_level: oldBlock.data?.is_published
+                    });
+
+                    // Build new block object explicitly (don't spread old block)
+                    const updatedBlock = {
+                        uuid: oldBlock.uuid,
+                        type: oldBlock.type,
+                        position: oldBlock.position,
+                        data: blockData,
+                        is_published: isPublished,  // Explicit override
+                    };
+
                     // Update existing block - use splice to trigger Alpine reactivity
-                    this.blocks.splice(existingIndex, 1, {
-                        ...this.blocks[existingIndex],
-                        data: data,
+                    this.blocks.splice(existingIndex, 1, updatedBlock);
+
+                    console.log('📝 AFTER update - Block at index', existingIndex, ':', {
+                        uuid: this.blocks[existingIndex].uuid,
+                        is_published_block_level: this.blocks[existingIndex].is_published,
+                        is_published_data_level: this.blocks[existingIndex].data?.is_published
                     });
                     console.log('✏️ Updated existing block at index', existingIndex);
                 } else {
@@ -95,19 +103,19 @@
                     this.blocks.push({
                         uuid: uuid,
                         type: type,
-                        data: data,
+                        data: blockData,
                         position: this.blocks.length,
-                        is_published: true,
+                        is_published: isPublished,
                     });
                     console.log('➕ Added new block, total blocks:', this.blocks.length);
                 }
 
                 this.reindexBlocks();
 
-                // Mark that we need to sync, but don't do it now (causes re-render)
-                // Will sync when form is submitted via Livewire.hook('commit')
-                this.needsSync = true;
-                console.log('🔄 needsSync set to true, blocks array:', this.blocks);
+                // Sync IMMEDIATELY to Livewire (like reorderBlocks does)
+                // This ensures the updated is_published value is synced before parent form save
+                this.$wire.set(this.statePath, this.blocks);
+                console.log('✅ Blocks synced immediately to Livewire', this.blocks);
             },
 
             openAddBlockModal() {
@@ -141,12 +149,19 @@
                     return;
                 }
 
+                // is_published is already in block.data from hydration
+                // But ensure it's synced with block level value
+                const data = {
+                    ...(block.data || {}),
+                    is_published: block.data?.is_published ?? block.is_published ?? true
+                };
+
                 // Open the block form modal with existing data - use Livewire 3 named parameters
                 Livewire.dispatch('openBlockFormModal', {
                     componentStatePath: this.statePath,
                     blockType: block.type,
                     uuid: block.uuid,
-                    data: block.data || {}
+                    data: data
                 });
             },
 
@@ -157,7 +172,10 @@
                         // Use splice to trigger Alpine reactivity properly
                         this.blocks.splice(index, 1);
                         this.reindexBlocks();
-                        this.needsSync = true;
+
+                        // Sync IMMEDIATELY to Livewire
+                        this.$wire.set(this.statePath, this.blocks);
+                        console.log('🗑️ Block deleted and synced immediately');
                     }
                 }
             },

@@ -20,8 +20,9 @@ trait HasFlexibleBlocks
     
     public function renderBlocks(?string $locale = null): string
     {
-        return $this->publishedBlocks
-            ->map(fn(AtelierBlock $block) => $block->hydrateBlock($locale)->render())
+        return $this->publishedBlocks()
+            ->get()
+            ->map(fn(AtelierBlock $block) => $block->render($locale)->render())
             ->implode('');
     }
 }

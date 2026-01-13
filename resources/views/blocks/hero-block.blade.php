@@ -30,7 +30,7 @@
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
 @endphp
 
-<section class="{{ $blockIdentifier }} relative {{ $height }} overflow-hidden {{ $block->getWrapperClasses() }}"
+<section class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }} {{ $height }} overflow-hidden"
          data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
     

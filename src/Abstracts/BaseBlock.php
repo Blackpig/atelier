@@ -2,6 +2,8 @@
 
 namespace BlackpigCreatif\Atelier\Abstracts;
 
+use Filament\Support\Enums\IconSize;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -23,7 +25,7 @@ abstract class BaseBlock
         return null;
     }
     
-    public static function getIcon(): string
+    public static function getIcon(): string | IconSize | Htmlable | null
     {
         return 'heroicon-o-square-3-stack-3d';
     }

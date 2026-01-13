@@ -140,9 +140,21 @@ class AtelierBlock extends Model
     public function clearCache(): void
     {
         $locales = array_keys(config('atelier.locales', ['en' => 'English']));
-        
+
         foreach ($locales as $locale) {
             cache()->forget($this->getCacheKey($locale));
         }
+    }
+
+    /**
+     * Render the block with automatic hydration
+     *
+     * @param string|null $locale Optional locale override
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function render(?string $locale = null): \Illuminate\Contracts\View\View
+    {
+        $instance = $this->hydrateBlock($locale);
+        return $instance->render();
     }
 }

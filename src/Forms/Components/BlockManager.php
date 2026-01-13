@@ -82,20 +82,60 @@ class BlockManager extends Field
     /**
      * Get SVG content for an icon
      */
-    protected function getIconSvg(string $icon): ?string
+    protected function getIconSvg(mixed $icon): ?string
     {
-        // Check if it's an Atelier icon
-        if (str_starts_with($icon, 'atelier.icons.')) {
-            $iconName = str_replace('atelier.icons.', '', $icon);
-            $iconPath = __DIR__.'/../../../resources/views/components/icons/'.$iconName.'.blade.php';
+        // Handle HtmlString (custom SVG)
+        if ($icon instanceof \Illuminate\Contracts\Support\Htmlable) {
+            return $icon->toHtml();
+        }
 
-            if (file_exists($iconPath)) {
-                return file_get_contents($iconPath);
+        // Handle string icons
+        if (is_string($icon)) {
+            // Check if it's an Atelier custom icon
+            if (str_starts_with($icon, 'atelier.icons.')) {
+                $iconName = str_replace('atelier.icons.', '', $icon);
+                $iconPath = __DIR__.'/../../../resources/views/components/icons/'.$iconName.'.blade.php';
+
+                if (file_exists($iconPath)) {
+                    return file_get_contents($iconPath);
+                }
+            }
+
+            // For heroicons, render them using Filament's icon system
+            if (str_starts_with($icon, 'heroicon-')) {
+                return $this->renderHeroicon($icon);
             }
         }
 
-        // For heroicons or other icons, return null (will use Filament's icon component)
+        // For other cases, return null
         return null;
+    }
+
+    /**
+     * Render a Heroicon to SVG string
+     */
+    protected function renderHeroicon(string $icon): ?string
+    {
+        try {
+            // Use Filament's icon rendering
+            $iconHtml = \Filament\Support\Facades\FilamentIcon::resolve($icon);
+
+            if ($iconHtml) {
+                return $iconHtml;
+            }
+
+            // Fallback: Try to render using Blade
+            return \Illuminate\Support\Facades\Blade::render(
+                '<x-filament::icon :icon="$icon" class="w-6 h-6" />',
+                ['icon' => $icon]
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to render heroicon', [
+                'icon' => $icon,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**
@@ -243,6 +283,9 @@ class BlockManager extends Field
             foreach ($blocks as $block) {
                 $extractedData = $component->extractBlockAttributes($block);
 
+                // Include is_published in the data for form hydration
+                $extractedData['is_published'] = $block->is_published;
+
                 \Log::info('BlockManager: Extracted block data', [
                     'block_id' => $block->id,
                     'uuid' => $block->uuid,
@@ -313,6 +356,8 @@ class BlockManager extends Field
                     'uuid' => $blockData['uuid'] ?? null,
                     'type' => $blockData['type'] ?? null,
                     'data_keys' => array_keys($blockData['data'] ?? []),
+                    'is_published_value' => $blockData['is_published'] ?? 'NOT SET',
+                    'full_block_data' => $blockData,
                 ]);
 
                 try {
@@ -443,6 +488,11 @@ class BlockManager extends Field
         $createdAttributesCount = 0;
 
         foreach ($data as $key => $value) {
+            // Skip is_published - it's a model field, not an attribute
+            if ($key === 'is_published') {
+                continue;
+            }
+
             // Skip if value is null or empty string
             if ($value === null || $value === '') {
                 \Log::debug('BlockManager: Skipping null/empty value', [

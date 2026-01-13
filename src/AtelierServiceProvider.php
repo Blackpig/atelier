@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier;
 
+use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierBlockCommand;
 use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
@@ -48,6 +49,11 @@ class AtelierServiceProvider extends ServiceProvider
         
         // Publishing
         if ($this->app->runningInConsole()) {
+            // Register commands
+            $this->commands([
+                MakeAtelierBlockCommand::class,
+            ]);
+
             // Publish config
             $this->publishes([
                 __DIR__.'/../config/atelier.php' => config_path('atelier.php'),
@@ -58,31 +64,32 @@ class AtelierServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'atelier-migrations');
             
-            // Publish views
-            $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/atelier'),
-            ], 'atelier-views');
-            
-            // Publish BLOCK TEMPLATES separately for designers
+            // Publish BLOCK TEMPLATES for designers to customize
             $this->publishes([
                 __DIR__.'/../resources/views/blocks' => resource_path('views/vendor/atelier/blocks'),
             ], 'atelier-block-templates');
-            
-            // Publish preview views
+
+            // Publish DIVIDER COMPONENTS (visual elements users might want to customize)
             $this->publishes([
-                __DIR__.'/../resources/views/preview' => resource_path('views/vendor/atelier/preview'),
-            ], 'atelier-preview-views');
+                __DIR__.'/../resources/views/components/dividers' => resource_path('views/vendor/atelier/components/dividers'),
+            ], 'atelier-dividers');
+
+            // Publish ALL views (use sparingly - for advanced customization only)
+            // WARNING: Publishing form components may cause issues with package updates
+            $this->publishes([
+                __DIR__.'/../resources/views' => resource_path('views/vendor/atelier'),
+            ], 'atelier-views-all');
             
             // Publish translations
             $this->publishes([
                 __DIR__.'/../resources/lang' => lang_path('vendor/atelier'),
             ], 'atelier-translations');
             
-            // Publish all
+            // Publish all (common setup - excludes form components to avoid conflicts)
             $this->publishes([
                 __DIR__.'/../config/atelier.php' => config_path('atelier.php'),
                 __DIR__.'/../database/migrations' => database_path('migrations'),
-                __DIR__.'/../resources/views' => resource_path('views/vendor/atelier'),
+                __DIR__.'/../resources/views/blocks' => resource_path('views/vendor/atelier/blocks'),
                 __DIR__.'/../resources/lang' => lang_path('vendor/atelier'),
             ], 'atelier');
         }
