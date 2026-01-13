@@ -5,7 +5,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockHeroConversion;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
@@ -40,45 +39,50 @@ class HeroBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('headline')
-                                ->label('Headline')
-                                ->required()
-                                ->maxLength(255)
-                                ->placeholder('Your compelling headline'),
+                    TextInput::make('headline')
+                        ->label('Headline')
+                        ->required()
+                        ->maxLength(255)
+                        ->placeholder('Your compelling headline')
+                        ->translatable(),  // ← Must be LAST
 
-                            TextInput::make('subheadline')
-                                ->label('Subheadline')
-                                ->maxLength(500)
-                                ->placeholder('Supporting text or tagline'),
+                    TextInput::make('subheadline')
+                        ->label('Subheadline')
+                        ->maxLength(500)
+                        ->placeholder('Supporting text or tagline')
+                        ->translatable(),  // ← Must be LAST
 
-                            Textarea::make('description')
-                                ->label('Description')
-                                ->rows(3)
-                                ->maxLength(1000)
-                                ->placeholder('Brief description or value proposition'),
-
-                            TextInput::make('cta_text')
-                                ->label('Button Text')
-                                ->maxLength(50)
-                                ->placeholder('Get Started'),
-                        ])
-                        ->columnSpanFull(),
+                    Textarea::make('description')
+                        ->label('Description')
+                        ->rows(3)
+                        ->maxLength(1000)
+                        ->placeholder('Brief description or value proposition')
+                        ->translatable(),  // ← Must be LAST
                 ])
                 ->collapsible(),
 
-            Section::make('Settings')
+            Section::make('Call to Action')
                 ->schema([
+                    TextInput::make('cta_text')
+                        ->label('Button Text')
+                        ->maxLength(50)
+                        ->placeholder('Get Started')
+                        ->translatable(),  // ← Must be LAST
+
                     TextInput::make('cta_url')
                         ->label('Button URL')
                         ->url()
-                        ->placeholder('https://example.com/signup'),
+                        ->placeholder('https://example.com/signup')
+                        ->helperText('Shared across all languages'),
 
                     Toggle::make('cta_new_tab')
                         ->label('Open in new tab')
                         ->default(false),
+                ])
+                ->collapsible(),
 
+            Section::make('Background & Styling')
+                ->schema([
                     RetouchMediaUpload::make('background_image')
                         ->label('Background Image')
                         ->preset(BlockHeroConversion::class)

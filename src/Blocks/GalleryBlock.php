@@ -5,7 +5,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
@@ -39,14 +38,11 @@ class GalleryBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Optional gallery title'),
-                        ])
-                        ->columnSpanFull(),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Optional gallery title')
+                        ->translatable(),
 
                     RetouchMediaUpload::make('images')
                         ->label('Images')

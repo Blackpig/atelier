@@ -4,7 +4,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -37,20 +36,18 @@ class VideoBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Optional video title'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Optional video title')
+                        ->translatable(),
 
-                            Textarea::make('description')
-                                ->label('Description')
-                                ->rows(2)
-                                ->maxLength(500)
-                                ->placeholder('Optional video description'),
-                        ])
-                        ->columnSpanFull(),
+                    Textarea::make('description')
+                        ->label('Description')
+                        ->rows(2)
+                        ->maxLength(500)
+                        ->placeholder('Optional video description')
+                        ->translatable(),
 
                     TextInput::make('video_url')
                         ->label('Video URL')

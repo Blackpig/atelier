@@ -25,6 +25,8 @@
             </x-slot>
         @else
             {{-- Form Mode --}}
+            <livewire:atelier-locale-selector :key="'block-locale-selector'" />
+
             {{ $this->form }}
 
             <x-slot name="footer">

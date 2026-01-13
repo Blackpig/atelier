@@ -5,7 +5,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\RichEditor;
@@ -38,27 +37,25 @@ class TextWithImageBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Section title'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Section title')
+                        ->translatable(),
 
-                            RichEditor::make('content')
-                                ->label('Content')
-                                ->required()
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'bulletList',
-                                    'orderedList',
-                                    'h3',
-                                ])
-                                ->placeholder('Your content here...'),
+                    RichEditor::make('content')
+                        ->label('Content')
+                        ->required()
+                        ->toolbarButtons([
+                            'bold',
+                            'italic',
+                            'link',
+                            'bulletList',
+                            'orderedList',
+                            'h3',
                         ])
-                        ->columnSpanFull(),
+                        ->placeholder('Your content here...')
+                        ->translatable(),
 
                     RetouchMediaUpload::make('image')
                         ->label('Image')

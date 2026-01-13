@@ -5,7 +5,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\Select;
@@ -55,20 +54,18 @@ class ImageBlock extends BaseBlock
                         ->hint('Auto-generates thumb (200x200), medium (800x600), and large (1600x1200) sizes.')
                         ->columnSpanFull(),
 
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Optional image title'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Optional image title')
+                        ->translatable(),
 
-                            Textarea::make('caption')
-                                ->label('Caption')
-                                ->rows(2)
-                                ->maxLength(500)
-                                ->placeholder('Optional image caption'),
-                        ])
-                        ->columnSpanFull(),
+                    Textarea::make('caption')
+                        ->label('Caption')
+                        ->rows(2)
+                        ->maxLength(500)
+                        ->placeholder('Optional image caption')
+                        ->translatable(),
                 ])
                 ->collapsible(),
 

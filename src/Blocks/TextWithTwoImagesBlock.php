@@ -5,7 +5,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
 use Filament\Forms\Components\RichEditor;
@@ -38,37 +37,37 @@ class TextWithTwoImagesBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Section title (optional)'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Section title (optional)')
+                        ->translatable(),
 
-                            RichEditor::make('content')
-                                ->label('Content')
-                                ->required()
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'bulletList',
-                                    'orderedList',
-                                    'h2',
-                                    'h3',
-                                ]),
-
-                            TextInput::make('image_1_caption')
-                                ->label('First Image Caption')
-                                ->maxLength(255)
-                                ->placeholder('Optional caption'),
-
-                            TextInput::make('image_2_caption')
-                                ->label('Second Image Caption')
-                                ->maxLength(255)
-                                ->placeholder('Optional caption'),
+                    RichEditor::make('content')
+                        ->label('Content')
+                        ->required()
+                        ->toolbarButtons([
+                            'bold',
+                            'italic',
+                            'link',
+                            'bulletList',
+                            'orderedList',
+                            'h2',
+                            'h3',
                         ])
-                        ->columnSpanFull(),
+                        ->translatable(),
+
+                    TextInput::make('image_1_caption')
+                        ->label('First Image Caption')
+                        ->maxLength(255)
+                        ->placeholder('Optional caption')
+                        ->translatable(),
+
+                    TextInput::make('image_2_caption')
+                        ->label('Second Image Caption')
+                        ->maxLength(255)
+                        ->placeholder('Optional caption')
+                        ->translatable(),
                 ])
                 ->collapsible(),
 

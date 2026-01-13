@@ -77,9 +77,7 @@ class Page extends Model
 
 ```php
 use BlackpigCreatif\Atelier\Forms\Components\BlockManager;
-use BlackpigCreatif\Atelier\Blocks\HeroBlock;
-use BlackpigCreatif\Atelier\Blocks\TextBlock;
-use BlackpigCreatif\Atelier\Blocks\ImageBlock;
+use BlackpigCreatif\Atelier\Collections\BasicBlocks;
 
 public static function form(Form $form): Form
 {
@@ -87,19 +85,28 @@ public static function form(Form $form): Form
         // ... other fields
 
         BlockManager::make('blocks')
-            ->blocks([
-                HeroBlock::class,
-                TextBlock::class,
-                ImageBlock::class,
-                // ... more blocks
-            ])
-            ->livePreview()
+            ->blocks(BasicBlocks::class)  // Use a Block Collection
             ->collapsed()
             ->collapsible()
             ->reorderable()
             ->cloneable(),
     ]);
 }
+```
+
+**Alternative:** Specify individual blocks:
+
+```php
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+use BlackpigCreatif\Atelier\Blocks\TextBlock;
+use BlackpigCreatif\Atelier\Blocks\ImageBlock;
+
+BlockManager::make('blocks')
+    ->blocks([
+        HeroBlock::class,
+        TextBlock::class,
+        ImageBlock::class,
+    ])
 ```
 
 ### 3. Render blocks in your view
@@ -152,6 +159,117 @@ Grid-based image gallery with configurable columns, gaps, and lightbox support. 
 
 ### **CarouselBlock**
 Image carousel/slider with navigation arrows, dots, and autoplay options. Great for featured content and testimonials.
+
+## Block Collections
+
+Organize blocks into reusable collections for cleaner code and better organization. Block Collections are similar to ChambreNoir's Conversions pattern.
+
+### Using Built-in Collections
+
+Atelier ships with three pre-configured collections:
+
+```php
+use BlackpigCreatif\Atelier\Collections\BasicBlocks;
+use BlackpigCreatif\Atelier\Collections\MediaBlocks;
+use BlackpigCreatif\Atelier\Collections\AllBlocks;
+
+// Use a single collection
+BlockManager::make('blocks')
+    ->blocks(BasicBlocks::class)
+
+// Combine multiple collections
+BlockManager::make('blocks')
+    ->blocks([BasicBlocks::class, MediaBlocks::class])
+
+// Mix collections with individual blocks
+BlockManager::make('blocks')
+    ->blocks([
+        BasicBlocks::class,
+        CustomBlock::class,
+    ])
+```
+
+**Built-in Collections:**
+- **`BasicBlocks`**: Hero, Text, Text with Image
+- **`MediaBlocks`**: Image, Video, Gallery, Carousel
+- **`AllBlocks`**: All available Atelier blocks
+
+### Creating Custom Collections
+
+Use the Artisan command to quickly generate a new collection:
+
+```bash
+php artisan make:atelier-collection Ecommerce
+```
+
+This creates a collection class at `app/Filament/Atelier/Collections/EcommerceBlocks.php`.
+
+Or create manually by extending `BaseBlockCollection`:
+
+```php
+namespace App\Filament\Atelier\Collections;
+
+use BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection;
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+use App\Filament\Atelier\Blocks\ProductBlock;
+use App\Filament\Atelier\Blocks\TestimonialBlock;
+
+class EcommerceBlocks extends BaseBlockCollection
+{
+    public function getBlocks(): array
+    {
+        return [
+            HeroBlock::class,
+            ProductBlock::class,
+            TestimonialBlock::class,
+        ];
+    }
+
+    public static function getLabel(): string
+    {
+        return 'E-commerce Blocks';
+    }
+
+    public static function getDescription(): ?string
+    {
+        return 'Blocks for product pages and e-commerce content.';
+    }
+}
+```
+
+Then use it in your resources:
+
+```php
+BlockManager::make('blocks')
+    ->blocks(EcommerceBlocks::class)
+```
+
+### All Supported Formats
+
+The `blocks()` method accepts multiple formats:
+
+```php
+// Single collection class
+->blocks(BasicBlocks::class)
+
+// Array of collections
+->blocks([BasicBlocks::class, MediaBlocks::class])
+
+// Array of block classes (traditional)
+->blocks([HeroBlock::class, TextBlock::class])
+
+// Mixed: collections + individual blocks
+->blocks([BasicBlocks::class, CustomBlock::class])
+
+// Closure (for dynamic logic)
+->blocks(fn() => auth()->user()->isAdmin()
+    ? AllBlocks::make()
+    : BasicBlocks::make()
+)
+
+// Empty (falls back to config)
+->blocks()
+```
 
 ## Display Options
 
@@ -235,7 +353,6 @@ namespace App\Filament\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
@@ -267,18 +384,16 @@ class QuoteBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            Textarea::make('quote')
-                                ->label('Quote')
-                                ->required()
-                                ->rows(3),
+                    Textarea::make('quote')
+                        ->label('Quote')
+                        ->required()
+                        ->rows(3)
+                        ->translatable(),  // Must be last
 
-                            TextInput::make('author')
-                                ->label('Author')
-                                ->required(),
-                        ])
-                        ->columnSpanFull(),
+                    TextInput::make('author')
+                        ->label('Author')
+                        ->required()
+                        ->translatable(),  // Must be last
                 ])
                 ->collapsible(),
 
@@ -397,25 +512,51 @@ public static function getIcon(): string | IconSize | Htmlable | null
 
 ## Translation Support
 
-Atelier includes a custom translation system built specifically for FilamentPHP v4:
+Atelier includes an elegant inline translation system with global locale switching:
+
+### Making Fields Translatable
+
+Add `.translatable()` to any Filament field. **Important:** `.translatable()` must be the **last method** in the chain:
 
 ```php
-// Mark fields as translatable
-public static function getTranslatableFields(): array
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+
+public static function getSchema(): array
 {
-    return ['title', 'content', 'description'];
+    return [
+        Section::make('Content')
+            ->schema([
+                TextInput::make('headline')
+                    ->label('Headline')
+                    ->required()
+                    ->maxLength(255)
+                    ->translatable(),  // ← Must be LAST
+
+                Textarea::make('description')
+                    ->label('Description')
+                    ->rows(3)
+                    ->translatable(),  // ← Must be LAST
+            ]),
+
+        Section::make('Settings')
+            ->schema([
+                TextInput::make('url')  // ← Not translatable
+                    ->url(),
+            ]),
+    ];
 }
-
-// Use TranslatableContainer in your schema
-TranslatableContainer::make()
-    ->translatableFields([
-        TextInput::make('title'),
-        Textarea::make('content'),
-    ]);
-
-// Retrieve translated content in views
-{{ $block->getTranslated('title') }}
 ```
+
+### How It Works
+
+- Global locale switcher appears at the top of the block modal
+- Click to switch between languages instantly
+- Each translatable field shows a globe icon and locale badge `[EN]` or `[FR]`
+- Fields are shown/hidden based on the selected locale
+- Data is stored as: `['headline' => ['en' => 'Hello', 'fr' => 'Bonjour']]`
+
+### Configuration
 
 Configure your locales in `config/atelier.php`:
 
@@ -425,6 +566,31 @@ Configure your locales in `config/atelier.php`:
     'fr' => 'Français',
     'es' => 'Español',
 ],
+
+'default_locale' => 'en',
+```
+
+### Declare Translatable Fields
+
+For proper data handling, declare which fields are translatable:
+
+```php
+public static function getTranslatableFields(): array
+{
+    return ['headline', 'description', 'cta_text'];
+}
+```
+
+### Retrieve Translated Content
+
+In your block templates:
+
+```blade
+{{-- Get translated value for current locale --}}
+{{ $block->getTranslated('headline') }}
+
+{{-- With specific locale --}}
+{{ $block->getTranslated('headline', 'fr') }}
 ```
 
 ## Live Preview

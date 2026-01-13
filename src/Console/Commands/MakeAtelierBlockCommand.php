@@ -89,7 +89,6 @@ namespace App\Filament\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -129,25 +128,23 @@ class {{className}} extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Enter a title'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Enter a title')
+                        ->translatable(),  // Must be LAST
 
-                            RichEditor::make('content')
-                                ->label('Content')
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'bulletList',
-                                    'orderedList',
-                                ])
-                                ->placeholder('Enter your content...'),
+                    RichEditor::make('content')
+                        ->label('Content')
+                        ->toolbarButtons([
+                            'bold',
+                            'italic',
+                            'link',
+                            'bulletList',
+                            'orderedList',
                         ])
-                        ->columnSpanFull(),
+                        ->placeholder('Enter your content...')
+                        ->translatable(),  // Must be LAST
                 ])
                 ->collapsible(),
 

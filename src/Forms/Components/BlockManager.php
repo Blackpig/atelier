@@ -11,7 +11,7 @@ class BlockManager extends Field
 {
     protected string $view = 'atelier::forms.components.block-manager';
 
-    protected array|Closure $blockClasses = [];
+    protected array|string|Closure $blockClasses = [];
 
     protected bool|Closure $isAddable = true;
 
@@ -27,9 +27,18 @@ class BlockManager extends Field
 
     /**
      * Set the available block classes
-     * If called without arguments or with empty array, will use config('atelier.blocks')
+     *
+     * Accepts:
+     * - Array of block classes: [HeroBlock::class, TextBlock::class]
+     * - Array of BlockCollection classes: [BasicBlocks::class, EcommerceBlocks::class]
+     * - Mixed array: [BasicBlocks::class, CustomBlock::class]
+     * - Single BlockCollection class string: BasicBlocks::class
+     * - Closure returning array: fn() => [...]
+     * - Empty/not set: Falls back to config('atelier.blocks')
+     *
+     * @param array|string|Closure $blockClasses
      */
-    public function blocks(array|Closure $blockClasses = []): static
+    public function blocks(array|string|Closure $blockClasses = []): static
     {
         $this->blockClasses = $blockClasses;
 
@@ -39,6 +48,7 @@ class BlockManager extends Field
     /**
      * Get the registered block classes
      * Falls back to config('atelier.blocks') if not explicitly set
+     * Resolves BlockCollection classes to their block arrays
      */
     public function getBlockClasses(): array
     {
@@ -49,7 +59,44 @@ class BlockManager extends Field
             $blocks = config('atelier.blocks', []);
         }
 
-        return $blocks;
+        // If it's a single BlockCollection class string, convert to array
+        if (is_string($blocks)) {
+            $blocks = [$blocks];
+        }
+
+        // Resolve BlockCollections to their block classes
+        return $this->resolveBlockCollections($blocks);
+    }
+
+    /**
+     * Resolve BlockCollection classes to their block arrays
+     *
+     * @param array $blocks
+     * @return array<int, class-string>
+     */
+    protected function resolveBlockCollections(array $blocks): array
+    {
+        $resolved = [];
+
+        foreach ($blocks as $block) {
+            // Check if this is a BlockCollection class
+            if (is_string($block) && class_exists($block)) {
+                $reflection = new \ReflectionClass($block);
+
+                // If it's a BlockCollection, get its blocks
+                if ($reflection->isSubclassOf(\BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection::class)) {
+                    $collectionBlocks = $block::make();
+                    $resolved = array_merge($resolved, $collectionBlocks);
+                    continue;
+                }
+            }
+
+            // Otherwise, it's a regular block class
+            $resolved[] = $block;
+        }
+
+        // Remove duplicates and reindex
+        return array_values(array_unique($resolved));
     }
 
     /**

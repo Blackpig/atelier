@@ -2,8 +2,11 @@
 
 namespace BlackpigCreatif\Atelier;
 
+use BlackpigCreatif\Atelier\Concerns\ConfiguresTranslatableFields;
 use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierBlockCommand;
+use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierCollectionCommand;
 use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
+use BlackpigCreatif\Atelier\Livewire\LocaleSelector;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
 use Filament\Support\Assets\Css;
@@ -34,6 +37,10 @@ class AtelierServiceProvider extends ServiceProvider
 
         // Register Livewire components
         Livewire::component('atelier-block-form-modal', BlockFormModal::class);
+        Livewire::component('atelier-locale-selector', LocaleSelector::class);
+
+        // Register translatable macro for Filament fields
+        ConfiguresTranslatableFields::configureTranslatableMacro();
 
         // Load migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
@@ -52,6 +59,7 @@ class AtelierServiceProvider extends ServiceProvider
             // Register commands
             $this->commands([
                 MakeAtelierBlockCommand::class,
+                MakeAtelierCollectionCommand::class,
             ]);
 
             // Publish config

@@ -4,7 +4,6 @@ namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Atelier\Forms\Components\TranslatableContainer;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -36,28 +35,26 @@ class TextBlock extends BaseBlock
         return [
             Section::make('Content')
                 ->schema([
-                    TranslatableContainer::make()
-                        ->translatableFields([
-                            TextInput::make('title')
-                                ->label('Title')
-                                ->maxLength(255)
-                                ->placeholder('Optional section title'),
+                    TextInput::make('title')
+                        ->label('Title')
+                        ->maxLength(255)
+                        ->placeholder('Optional section title')
+                        ->translatable(),
 
-                            RichEditor::make('content')
-                                ->label('Content')
-                                ->required()
-                                ->toolbarButtons([
-                                    'bold',
-                                    'italic',
-                                    'link',
-                                    'bulletList',
-                                    'orderedList',
-                                    'h2',
-                                    'h3',
-                                ])
-                                ->placeholder('Your content here...'),
+                    RichEditor::make('content')
+                        ->label('Content')
+                        ->required()
+                        ->toolbarButtons([
+                            'bold',
+                            'italic',
+                            'link',
+                            'bulletList',
+                            'orderedList',
+                            'h2',
+                            'h3',
                         ])
-                        ->columnSpanFull(),
+                        ->placeholder('Your content here...')
+                        ->translatable(),
                 ])
                 ->collapsible(),
 
