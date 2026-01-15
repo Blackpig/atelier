@@ -31,7 +31,7 @@ class MakeAtelierBlockCommand extends Command
         $blockLabel = Str::title(str_replace('Block', '', $className));
 
         // Paths
-        $classPath = app_path("Filament/Atelier/Blocks/{$className}.php");
+        $classPath = app_path("BlackpigCreatif/Atelier/Blocks/{$className}.php");
         $viewPath = resource_path("views/vendor/atelier/blocks/{$kebabName}-block.blade.php");
 
         // Check if block already exists
@@ -72,7 +72,7 @@ class MakeAtelierBlockCommand extends Command
         $this->newLine();
         $this->line("<fg=yellow>Next steps:</>");
         $this->line("1. Add your block to a BlockManager:");
-        $this->line("   <fg=cyan>\\App\\Filament\\Atelier\\Blocks\\{$className}::class</>");
+        $this->line("   <fg=cyan>\\App\\BlackpigCreatif\\Atelier\\Blocks\\{$className}::class</>");
         $this->newLine();
         $this->line("2. Customize the schema in: <fg=cyan>{$classPath}</>");
         $this->line("3. Design the template in: <fg=cyan>{$viewPath}</>");
@@ -85,7 +85,7 @@ class MakeAtelierBlockCommand extends Command
         return <<<'PHP'
 <?php
 
-namespace App\Filament\Atelier\Blocks;
+namespace App\BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
@@ -176,7 +176,7 @@ PHP;
      * {{blockLabel}} Block Template
      *
      * Available Variables:
-     * @var \App\Filament\Atelier\Blocks\{{className}} $block - The block instance
+     * @var \App\BlackpigCreatif\Atelier\Blocks\{{className}} $block - The block instance
      * @var string|null $title - Translated title
      * @var string|null $content - Translated HTML content
      *

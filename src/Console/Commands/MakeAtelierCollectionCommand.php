@@ -29,8 +29,8 @@ class MakeAtelierCollectionCommand extends Command
         $name = Str::studly($name);
 
         // Generate class
-        $namespace = 'App\\Filament\\Atelier\\Collections';
-        $path = app_path('Filament/Atelier/Collections');
+        $namespace = 'App\\BlackpigCreatif\\Atelier\\Collections';
+        $path = app_path('BlackpigCreatif/Atelier/Collections');
 
         // Create directory if it doesn't exist
         if (! is_dir($path)) {
@@ -74,7 +74,7 @@ namespace {{ namespace }};
 use BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection;
 // Import your block classes here
 // use BlackpigCreatif\Atelier\Blocks\HeroBlock;
-// use App\Filament\Atelier\Blocks\CustomBlock;
+// use App\BlackpigCreatif\Atelier\Blocks\CustomBlock;
 
 class {{ class }} extends BaseBlockCollection
 {
