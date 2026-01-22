@@ -10,6 +10,7 @@ trait HasDivider
     public function getDividerClass(): string
     {
         $divider = $this->get('divider', 'none');
+
         return config("atelier.features.dividers.options.{$divider}.class", '');
     }
 
@@ -25,7 +26,7 @@ trait HasDivider
         // Get the selected "to background" color
         $toBackground = $this->get('divider_to_background');
 
-        if (!$toBackground) {
+        if (! $toBackground) {
             return null;
         }
 
@@ -35,7 +36,7 @@ trait HasDivider
         // Extract just the background color part and convert to text color
         // e.g., "bg-white" -> "text-white", "bg-primary-500 text-white" -> "text-primary-500"
         if (preg_match('/bg-([^\s]+)/', $bgClass, $matches)) {
-            return 'text-' . $matches[1];
+            return 'text-'.$matches[1];
         }
 
         return 'text-white';
@@ -47,7 +48,8 @@ trait HasDivider
     public function hasDivider(): bool
     {
         $divider = $this->get('divider', 'none');
-        return $divider !== 'none' && !empty($divider);
+
+        return $divider !== 'none' && ! empty($divider);
     }
 
     /**
@@ -55,7 +57,7 @@ trait HasDivider
      */
     public function getDividerComponent(): ?string
     {
-        if (!$this->hasDivider()) {
+        if (! $this->hasDivider()) {
             return null;
         }
 
@@ -77,10 +79,10 @@ trait HasDivider
     public static function getDividerField(): array
     {
         $dividerOptions = collect(config('atelier.features.dividers.options'))
-            ->mapWithKeys(fn($opt, $key) => [$key => $opt['label']]);
+            ->mapWithKeys(fn ($opt, $key) => [$key => $opt['label']]);
 
         $backgroundOptions = collect(config('atelier.features.backgrounds.options'))
-            ->mapWithKeys(fn($opt, $key) => [$key => $opt['label']]);
+            ->mapWithKeys(fn ($opt, $key) => [$key => $opt['label']]);
 
         return [
             Select::make('divider')

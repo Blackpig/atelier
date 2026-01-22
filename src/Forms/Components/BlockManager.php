@@ -35,8 +35,6 @@ class BlockManager extends Field
      * - Single BlockCollection class string: BasicBlocks::class
      * - Closure returning array: fn() => [...]
      * - Empty/not set: Falls back to config('atelier.blocks')
-     *
-     * @param array|string|Closure $blockClasses
      */
     public function blocks(array|string|Closure $blockClasses = []): static
     {
@@ -71,7 +69,6 @@ class BlockManager extends Field
     /**
      * Resolve BlockCollection classes to their block arrays
      *
-     * @param array $blocks
      * @return array<int, class-string>
      */
     protected function resolveBlockCollections(array $blocks): array
@@ -87,6 +84,7 @@ class BlockManager extends Field
                 if ($reflection->isSubclassOf(\BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection::class)) {
                     $collectionBlocks = $block::make();
                     $resolved = array_merge($resolved, $collectionBlocks);
+
                     continue;
                 }
             }
@@ -179,8 +177,9 @@ class BlockManager extends Field
         } catch (\Exception $e) {
             \Log::warning('Failed to render heroicon', [
                 'icon' => $icon,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -307,6 +306,7 @@ class BlockManager extends Field
 
             if (! $record || ! method_exists($record, 'blocks')) {
                 \Log::warning('BlockManager: Hydration stopped - no record or blocks method');
+
                 return;
             }
 
@@ -322,6 +322,7 @@ class BlockManager extends Field
             if ($blocks->isEmpty()) {
                 $component->state([]);
                 \Log::info('BlockManager: No blocks found, setting empty state');
+
                 return;
             }
 
@@ -371,6 +372,7 @@ class BlockManager extends Field
                     'has_record' => (bool) $record,
                     'record_class' => $record ? get_class($record) : null,
                 ]);
+
                 return;
             }
 
@@ -513,6 +515,7 @@ class BlockManager extends Field
             \Log::error('BlockManager: Block type class not found', [
                 'block_type' => $blockType,
             ]);
+
             return;
         }
 
@@ -545,6 +548,7 @@ class BlockManager extends Field
                 \Log::debug('BlockManager: Skipping null/empty value', [
                     'key' => $key,
                 ]);
+
                 continue;
             }
 

@@ -27,7 +27,7 @@ class AtelierBlockAttribute extends Model
     {
         parent::__construct($attributes);
 
-        $this->table = config('atelier.table_prefix', 'atelier_') . 'block_attributes';
+        $this->table = config('atelier.table_prefix', 'atelier_').'block_attributes';
     }
 
     public function block(): BelongsTo
@@ -38,7 +38,7 @@ class AtelierBlockAttribute extends Model
     // Cast value based on type
     public function getCastedValue(): mixed
     {
-        return match($this->type) {
+        return match ($this->type) {
             'integer' => (int) $this->value,
             'float' => (float) $this->value,
             'boolean' => (bool) $this->value,

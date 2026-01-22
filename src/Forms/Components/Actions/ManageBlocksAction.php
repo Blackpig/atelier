@@ -2,11 +2,9 @@
 
 namespace BlackpigCreatif\Atelier\Forms\Components\Actions;
 
-use Closure;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
-use Illuminate\Support\Str;
 
 class ManageBlocksAction extends Action
 {
@@ -28,7 +26,7 @@ class ManageBlocksAction extends Action
             ->modalSubmitAction(false)
             ->modalCancelAction(false)
             ->modalWidth('3xl')
-            ->modalContent(fn($livewire, $action) => view('atelier::forms.components.block-type-selector', [
+            ->modalContent(fn ($livewire, $action) => view('atelier::forms.components.block-type-selector', [
                 'blockClasses' => $action->getBlockClasses(),
                 'componentName' => $action->getComponent()->getStatePath(),
             ]))
@@ -36,7 +34,7 @@ class ManageBlocksAction extends Action
                 // This is called from Alpine when a block type is selected
                 $blockType = $arguments['blockType'] ?? null;
 
-                if (!$blockType) {
+                if (! $blockType) {
                     return;
                 }
 
@@ -58,7 +56,7 @@ class ManageBlocksAction extends Action
             ->label('Edit Block')
             ->icon('heroicon-o-pencil')
             ->color('gray')
-            ->modalHeading(fn($arguments) => 'Edit Block')
+            ->modalHeading(fn ($arguments) => 'Edit Block')
             ->modalWidth('5xl')
             ->fillForm(function ($arguments, Get $get, Component $component): array {
                 $uuid = $arguments['uuid'] ?? null;
@@ -85,13 +83,13 @@ class ManageBlocksAction extends Action
                     }
                 }
 
-                if (!$blockData) {
+                if (! $blockData) {
                     return [];
                 }
 
                 $blockClass = $blockData['type'] ?? null;
 
-                if (!$blockClass || !class_exists($blockClass)) {
+                if (! $blockClass || ! class_exists($blockClass)) {
                     return [];
                 }
 

@@ -7,7 +7,7 @@ use Filament\Schemas\Components\Section;
 
 trait HasCommonOptions
 {
-    use HasBackground, HasSpacing, HasWidth, HasDivider;
+    use HasBackground, HasDivider, HasSpacing, HasWidth;
 
     public static function getCommonOptionsSchema(): array
     {
@@ -42,7 +42,7 @@ trait HasCommonOptions
             }
         }
 
-        if (!empty($fields)) {
+        if (! empty($fields)) {
             $sections[] = Section::make('Display Options')
                 ->schema($fields)
                 ->columns(3)
@@ -64,7 +64,7 @@ trait HasCommonOptions
 
         return $sections;
     }
-    
+
     public function getWrapperClasses(): string
     {
         $classes = [];
@@ -84,13 +84,13 @@ trait HasCommonOptions
 
         return implode(' ', array_filter($classes));
     }
-    
+
     public function getContainerClasses(): string
     {
         if (method_exists($this, 'getWidthClass')) {
             return $this->getWidthClass();
         }
-        
+
         return '';
     }
 }

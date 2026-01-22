@@ -15,11 +15,17 @@ class BlockFormModal extends LivewireComponent implements HasForms
     use InteractsWithForms;
 
     public ?string $blockType = null;
+
     public ?string $uuid = null;
+
     public ?string $componentStatePath = null;
+
     public bool $isOpen = false;
+
     public bool $isPreview = false;
+
     public ?string $previewHtml = null;
+
     public array $blockData = [];
 
     protected $listeners = [
@@ -50,7 +56,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
 
     public function form(Schema $schema): Schema
     {
-        if (!$this->blockType || !class_exists($this->blockType)) {
+        if (! $this->blockType || ! class_exists($this->blockType)) {
             return $schema->schema([]);
         }
 
@@ -80,7 +86,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
         // Remove metadata fields before filling form - they interfere with field hydration
         $cleanData = [];
         foreach ($data as $key => $value) {
-            if (!str_starts_with($key, '_')) {
+            if (! str_starts_with($key, '_')) {
                 $cleanData[$key] = $value;
             }
         }
@@ -118,7 +124,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
                 'data' => $data,
             ]);
 
-            if (!$this->uuid) {
+            if (! $this->uuid) {
                 // Adding new block
                 $this->uuid = (string) Str::uuid();
             }
@@ -188,16 +194,15 @@ class BlockFormModal extends LivewireComponent implements HasForms
         $this->dispatch('open-modal', id: 'block-form-modal');
     }
 
-
     protected function generatePreview(string $blockType, array $data): string
     {
-        if (!class_exists($blockType)) {
+        if (! class_exists($blockType)) {
             return '<div class="text-red-600 p-4">Block type not found</div>';
         }
 
         try {
             // Create a new block instance
-            $block = new $blockType();
+            $block = new $blockType;
 
             // Common sensible defaults for all block types
             $defaults = [
@@ -272,7 +277,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return '<div class="text-red-600 p-4">Error generating preview: ' . htmlspecialchars($e->getMessage()) . '</div>';
+            return '<div class="text-red-600 p-4">Error generating preview: '.htmlspecialchars($e->getMessage()).'</div>';
         }
     }
 

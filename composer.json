@@ -24,6 +24,7 @@
     "require": {
         "php": "^8.2|^8.3|^8.4",
         "blackpig-creatif/chambre-noir": "dev-main",
+        "blackpig-creatif/sceau": "dev-main",
         "filament/filament": "^4.0",
         "illuminate/contracts": "^11.0|^12.0"
     },
@@ -31,6 +32,10 @@
         {
             "type": "path",
             "url": "../chambre-noir"
+        },
+        {
+            "type": "path",
+            "url": "../sceau"
         }
     ],
     "require-dev": {

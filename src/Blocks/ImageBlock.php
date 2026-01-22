@@ -130,4 +130,33 @@ class ImageBlock extends BaseBlock
     {
         return view(static::getViewPath(), $this->getViewData());
     }
+
+    /**
+     * Image blocks contribute to composite Article schemas.
+     */
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Provide the image URL to be included in article images.
+     */
+    public function getCompositeContribution(): array
+    {
+        $imageUuid = $this->get('image');
+
+        if (! $imageUuid) {
+            return ['type' => 'image', 'url' => null];
+        }
+
+        // Use the large conversion for schema markup
+        $url = $this->resolveRetouchMediaUrl($imageUuid, 'large');
+
+        return [
+            'type' => 'image',
+            'url' => $url,
+            'caption' => $this->get('caption'),
+        ];
+    }
 }

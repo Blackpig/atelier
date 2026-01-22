@@ -18,11 +18,12 @@ class MakeAtelierBlockCommand extends Command
 
         if (empty($name)) {
             $this->error('Block name is required!');
+
             return self::FAILURE;
         }
 
         // Ensure name ends with "Block"
-        if (!Str::endsWith($name, 'Block')) {
+        if (! Str::endsWith($name, 'Block')) {
             $name .= 'Block';
         }
 
@@ -37,6 +38,7 @@ class MakeAtelierBlockCommand extends Command
         // Check if block already exists
         if (File::exists($classPath)) {
             $this->error("Block already exists: {$classPath}");
+
             return self::FAILURE;
         }
 
@@ -68,10 +70,10 @@ class MakeAtelierBlockCommand extends Command
 
         // Output usage instructions
         $this->newLine();
-        $this->line("<fg=green>Block created successfully!</>");
+        $this->line('<fg=green>Block created successfully!</>');
         $this->newLine();
-        $this->line("<fg=yellow>Next steps:</>");
-        $this->line("1. Add your block to a BlockManager:");
+        $this->line('<fg=yellow>Next steps:</>');
+        $this->line('1. Add your block to a BlockManager:');
         $this->line("   <fg=cyan>\\App\\BlackpigCreatif\\Atelier\\Blocks\\{$className}::class</>");
         $this->newLine();
         $this->line("2. Customize the schema in: <fg=cyan>{$classPath}</>");

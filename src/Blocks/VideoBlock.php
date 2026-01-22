@@ -113,4 +113,63 @@ class VideoBlock extends BaseBlock
     {
         return view(static::getViewPath(), $this->getViewData());
     }
+
+    /**
+     * Video blocks generate their own standalone VideoObject schema.
+     */
+    public function hasStandaloneSchema(): bool
+    {
+        return ! empty($this->get('video_url'));
+    }
+
+    /**
+     * Generate VideoObject schema.
+     */
+    public function toStandaloneSchema(): ?array
+    {
+        $videoUrl = $this->get('video_url');
+
+        if (! $videoUrl) {
+            return null;
+        }
+
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'VideoObject',
+            'contentUrl' => $videoUrl,
+        ];
+
+        if ($title = $this->get('title')) {
+            $schema['name'] = $title;
+        }
+
+        if ($description = $this->get('description')) {
+            $schema['description'] = $description;
+        }
+
+        // Try to extract embed URL for common platforms
+        if ($embedUrl = $this->getEmbedUrl($videoUrl)) {
+            $schema['embedUrl'] = $embedUrl;
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Extract embed URL from video URL.
+     */
+    protected function getEmbedUrl(string $url): ?string
+    {
+        // YouTube
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\?]+)/', $url, $matches)) {
+            return 'https://www.youtube.com/embed/'.$matches[1];
+        }
+
+        // Vimeo
+        if (preg_match('/vimeo\.com\/(\d+)/', $url, $matches)) {
+            return 'https://player.vimeo.com/video/'.$matches[1];
+        }
+
+        return null;
+    }
 }

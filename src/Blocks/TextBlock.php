@@ -99,4 +99,23 @@ class TextBlock extends BaseBlock
     {
         return view(static::getViewPath(), $this->getViewData());
     }
+
+    /**
+     * Text blocks contribute to composite Article schemas.
+     */
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Provide the text content to be included in article body.
+     */
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'text',
+            'content' => strip_tags($this->get('content') ?? ''),
+        ];
+    }
 }

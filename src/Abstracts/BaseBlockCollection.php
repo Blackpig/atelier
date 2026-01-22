@@ -18,7 +18,7 @@ abstract class BaseBlockCollection
      */
     public static function make(): array
     {
-        return (new static())->getBlocks();
+        return (new static)->getBlocks();
     }
 
     /**

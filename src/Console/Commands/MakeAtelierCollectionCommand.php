@@ -17,6 +17,7 @@ class MakeAtelierCollectionCommand extends Command
 
         if (! $name) {
             $this->error('Collection name is required');
+
             return self::FAILURE;
         }
 
@@ -42,6 +43,7 @@ class MakeAtelierCollectionCommand extends Command
         // Check if file already exists
         if (file_exists($filePath)) {
             $this->error("Collection {$name} already exists!");
+
             return self::FAILURE;
         }
 

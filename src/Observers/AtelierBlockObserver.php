@@ -10,7 +10,7 @@ class AtelierBlockObserver
     {
         $block->clearCache();
     }
-    
+
     public function deleted(AtelierBlock $block): void
     {
         $block->clearCache();
@@ -21,7 +21,7 @@ class AtelierBlockObserver
         // Get all file paths from this block's attributes
         $filePaths = $block->attributes()
             ->get()
-            ->map(function($attr) {
+            ->map(function ($attr) {
                 $value = json_decode($attr->value, true);
 
                 // Handle array of paths (multiple file uploads)
@@ -30,24 +30,24 @@ class AtelierBlockObserver
                 }
 
                 // Handle single path
-                if (is_string($value) && !empty($value)) {
+                if (is_string($value) && ! empty($value)) {
                     return [$value];
                 }
 
                 return [];
             })
             ->flatten()
-            ->filter(function($path) {
+            ->filter(function ($path) {
                 // Only include actual file paths (not livewire temp paths, not absolute paths)
                 return is_string($path)
-                    && !str_contains($path, 'livewire-tmp')
-                    && !str_starts_with($path, '/');
+                    && ! str_contains($path, 'livewire-tmp')
+                    && ! str_starts_with($path, '/');
             })
             ->unique()
             ->toArray();
 
         // Delete the files from storage
-        if (!empty($filePaths)) {
+        if (! empty($filePaths)) {
             \Storage::delete($filePaths);
         }
     }

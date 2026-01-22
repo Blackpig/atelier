@@ -55,7 +55,7 @@ trait HasSpacing
     public static function getSpacingField(): array
     {
         $spacingOptions = collect(config('atelier.features.spacing.options'))
-            ->mapWithKeys(fn($opt, $key) => [$key => $opt['label']]);
+            ->mapWithKeys(fn ($opt, $key) => [$key => $opt['label']]);
 
         return [
             Select::make('spacing_mode')

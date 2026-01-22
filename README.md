@@ -19,6 +19,7 @@ In a master's atelier, every element is placed with intention. Every detail cons
 - **Extensible**: Traits and abstracts for rapid customization
 - **Performant**: Smart caching and eager loading
 - **Live Preview**: Preview blocks before publishing
+- **SEO-Ready**: Automatic Schema.org structured data generation
 
 ## Requirements
 
@@ -33,6 +34,10 @@ Install the package via composer:
 ```bash
 composer require blackpig-creatif/atelier
 ```
+
+**Note:** Atelier automatically installs its companion packages:
+- **[Chambre Noir](https://github.com/blackpig-creatif/chambre-noir)** - Image processing and conversions
+- **[Sceau](https://github.com/blackpig-creatif/sceau)** - SEO and Schema.org structured data
 
 Publish and run the migrations:
 
@@ -729,6 +734,120 @@ return [
     ],
 ];
 ```
+
+## SEO Schema Generation
+
+Atelier integrates with **[Sceau](https://github.com/blackpig-creatif/sceau)** to automatically generate Schema.org structured data (JSON-LD) from your blocks. This helps search engines understand your content and can result in rich snippets in search results.
+
+### How It Works
+
+Every Atelier block inherits schema contribution capabilities through the `InteractsWithSchema` trait. Blocks can either:
+
+1. **Contribute to composite schemas** (like Article) - Multiple blocks combine into one schema
+2. **Generate standalone schemas** (like VideoObject) - Each block creates its own schema
+
+### Built-in Schema Support
+
+**TextBlock** - Contributes content to Article schemas
+**ImageBlock** - Contributes images to Article schemas
+**VideoBlock** - Generates standalone VideoObject schemas
+
+### Automatic Schema Generation
+
+Use `PageSchemaBuilder` in your controller to automatically generate schemas from all page blocks:
+
+```php
+use BlackpigCreatif\Sceau\Services\PageSchemaBuilder;
+
+public function show(Page $page)
+{
+    // Automatically generates:
+    // - Article schema (from TextBlocks and ImageBlocks)
+    // - VideoObject schemas (from VideoBlocks)
+    PageSchemaBuilder::build($page);
+
+    return view('pages.show', ['page' => $page]);
+}
+```
+
+### Custom Block Schemas
+
+Override schema methods in your custom blocks:
+
+**Contributing to Article Schema:**
+
+```php
+class QuoteBlock extends BaseBlock
+{
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'text',
+            'content' => $this->get('quote'),
+        ];
+    }
+}
+```
+
+**Generating Standalone Schema:**
+
+```php
+class FaqBlock extends BaseBlock
+{
+    public function hasStandaloneSchema(): bool
+    {
+        return !empty($this->get('pairs'));
+    }
+
+    public function toStandaloneSchema(): ?array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => collect($this->get('pairs'))->map(fn($pair) => [
+                '@type' => 'Question',
+                'name' => $pair['question'],
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $pair['answer'],
+                ],
+            ])->toArray(),
+        ];
+    }
+}
+```
+
+### Example Output
+
+For a page with 3 TextBlocks, 1 ImageBlock, and 1 VideoBlock, the generated JSON-LD will include:
+
+```json
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Page Title",
+    "articleBody": "Combined text from all TextBlocks...",
+    "image": ["image-url.jpg"],
+    "author": {...},
+    "datePublished": "2025-01-22T18:00:00Z"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": "Video Title",
+    "contentUrl": "https://youtube.com/watch?v=...",
+    "embedUrl": "https://youtube.com/embed/..."
+  }
+]
+```
+
+For more details, see the **[Sceau documentation](https://github.com/blackpig-creatif/sceau)**.
 
 ## Documentation
 

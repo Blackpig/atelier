@@ -20,7 +20,7 @@ class LocaleSelector extends Component
     {
         $availableLocales = config('atelier.locales', []);
 
-        if (!isset($availableLocales[$locale])) {
+        if (! isset($availableLocales[$locale])) {
             return;
         }
 
