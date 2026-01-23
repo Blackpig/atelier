@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier\Abstracts;
 
+use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Sceau\Concerns\InteractsWithSchema;
 use Filament\Support\Enums\IconSize;
 use Illuminate\Contracts\Support\Htmlable;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 abstract class BaseBlock
 {
-    use InteractsWithSchema;
+    use InteractsWithSchema, HasCommonOptions;
 
     protected array $data = [];
 

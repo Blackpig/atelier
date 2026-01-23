@@ -3,7 +3,6 @@
 namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
-use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -14,7 +13,7 @@ use Illuminate\Contracts\View\View;
 
 class VideoBlock extends BaseBlock
 {
-    use HasCommonOptions;
+    
 
     public static function getLabel(): string
     {

@@ -3,7 +3,6 @@
 namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
-use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
@@ -17,7 +16,7 @@ use Illuminate\Contracts\View\View;
 
 class ImageBlock extends BaseBlock
 {
-    use HasCommonOptions, HasRetouchMedia;
+    use HasRetouchMedia;
 
     public static function getLabel(): string
     {
