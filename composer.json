@@ -30,12 +30,12 @@
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../chambre-noir"
+            "type": "vcs",
+            "url": "https://github.com/blackpig-creatif/chambre-noir"
         },
         {
-            "type": "path",
-            "url": "../sceau"
+            "type": "vcs",
+            "url": "https://github.com/blackpig-creatif/sceau"
         }
     ],
     "require-dev": {
