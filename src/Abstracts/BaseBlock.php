@@ -95,7 +95,14 @@ abstract class BaseBlock
 
         // Check if this field is translatable
         if (in_array($key, static::getTranslatableFields())) {
-            return $this->get("{$key}.{$locale}") ?? $this->get($key);
+            $value = $this->get("{$key}.{$locale}") ?? $this->get($key);
+
+            // If the value is still an array (legacy multi-locale data), try to extract the locale
+            if (is_array($value)) {
+                return $value[$locale] ?? $value[array_key_first($value)] ?? null;
+            }
+
+            return $value;
         }
 
         return $this->get($key);
