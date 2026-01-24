@@ -25,6 +25,8 @@ class BlockManager extends Field
 
     protected ?string $addButtonLabel = null;
 
+    protected array $fieldConfigurations = [];
+
     /**
      * Set the available block classes
      *
@@ -95,6 +97,53 @@ class BlockManager extends Field
 
         // Remove duplicates and reindex
         return array_values(array_unique($resolved));
+    }
+
+    /**
+     * Configure a specific field in a block
+     *
+     * @param string $blockClass The block class to configure
+     * @param string $fieldName The field name to modify
+     * @param array $config Configuration array (e.g., ['maxItems' => 1])
+     * @return static
+     */
+    public function configureField(string $blockClass, string $fieldName, array $config): static
+    {
+        $key = $blockClass . '::' . $fieldName;
+        $this->fieldConfigurations[$key] = $config;
+
+        return $this;
+    }
+
+    /**
+     * Get field configurations formatted for frontend
+     *
+     * Returns configurations nested by block class:
+     * [
+     *   'App\Blocks\HeroBlock' => ['ctas' => ['maxItems' => 2]],
+     *   'App\Blocks\TextBlock' => ['heading' => ['maxLength' => 100]]
+     * ]
+     *
+     * @return array
+     */
+    public function getFieldConfigurations(): array
+    {
+        $nested = [];
+
+        foreach ($this->fieldConfigurations as $key => $config) {
+            // Key format: "BlockClass::fieldName"
+            if (str_contains($key, '::')) {
+                [$blockClass, $fieldName] = explode('::', $key, 2);
+
+                if (! isset($nested[$blockClass])) {
+                    $nested[$blockClass] = [];
+                }
+
+                $nested[$blockClass][$fieldName] = $config;
+            }
+        }
+
+        return $nested;
     }
 
     /**
@@ -462,14 +511,33 @@ class BlockManager extends Field
             return [];
         }
 
-        $translatableFields = $blockClass::getTranslatableFields();
+        // Scan actual schema to determine which fields are currently translatable
+        // This ensures schema is source of truth, not hardcoded getTranslatableFields()
+        $schemaTranslatableFields = $this->getSchemaTranslatableFields($blockClass);
+
+        \Log::info('🔍 Schema-based translatable fields', [
+            'block_class' => $blockClass,
+            'schema_translatable' => $schemaTranslatableFields,
+            'legacy_method' => $blockClass::getTranslatableFields(),
+        ]);
+
         $attributes = $block->attributes()->get();
         $data = [];
 
-        // Group attributes by key
-        foreach ($attributes->groupBy('key') as $key => $attributeGroup) {
-            if (in_array($key, $translatableFields)) {
-                // Build translation array - translatable fields ALWAYS return as locale-keyed array
+        // Separate collection-based attributes from simple attributes
+        $collectionAttributes = $attributes->whereNotNull('collection_name');
+        $simpleAttributes = $attributes->whereNull('collection_name');
+
+        // Process simple (non-collection) attributes first
+        foreach ($simpleAttributes->groupBy('key') as $key => $attributeGroup) {
+            // Check if field is CURRENTLY marked as translatable in schema
+            $isCurrentlyTranslatable = in_array($key, $schemaTranslatableFields);
+
+            // Check if data HAS locale stamps (was translatable at some point)
+            $hasLocaleStamps = $attributeGroup->whereNotNull('locale')->isNotEmpty();
+
+            if ($isCurrentlyTranslatable && $hasLocaleStamps) {
+                // Case 1: Field IS translatable AND has locale data → return as locale-keyed array
                 $translations = [];
 
                 foreach ($attributeGroup as $attr) {
@@ -478,16 +546,250 @@ class BlockManager extends Field
                     }
                 }
 
-                // Translatable fields always return as array (even if empty or single locale)
                 $data[$key] = $translations;
+            } elseif ($isCurrentlyTranslatable && ! $hasLocaleStamps) {
+                // Case 4: Field IS translatable NOW but has NO locale stamps (was non-translatable)
+                // Wrap plain value in current locale array
+                $firstAttr = $attributeGroup->first();
+                $currentLocale = app()->getLocale();
+
+                $data[$key] = $firstAttr ? [$currentLocale => $firstAttr->getCastedValue()] : [];
+
+                \Log::info('📝 Case 4: Wrapping non-locale data in current locale', [
+                    'key' => $key,
+                    'original_value' => $firstAttr?->getCastedValue(),
+                    'wrapped_value' => $data[$key],
+                ]);
+            } elseif (! $isCurrentlyTranslatable && $hasLocaleStamps) {
+                // Case 2: Field is NOT CURRENTLY translatable but DB has locale stamps
+                // Extract only current locale's value as plain string
+                $currentLocale = app()->getLocale();
+                $defaultLocale = config('atelier.default_locale', 'en');
+
+                // Try current locale first, then default locale, then first available
+                $currentLocaleAttr = $attributeGroup->where('locale', $currentLocale)->first();
+                $defaultLocaleAttr = $attributeGroup->where('locale', $defaultLocale)->first();
+                $firstAttr = $attributeGroup->first();
+
+                $data[$key] = ($currentLocaleAttr ?? $defaultLocaleAttr ?? $firstAttr)?->getCastedValue();
+
+                \Log::info('📝 Case 2: Extracting locale value as plain string', [
+                    'key' => $key,
+                    'extracted_value' => $data[$key],
+                    'current_locale' => $currentLocale,
+                    'had_current_locale' => $currentLocaleAttr !== null,
+                ]);
             } else {
-                // Non-translatable - just the value
+                // Case 3: Non-translatable field with no locale stamps - just the value
                 $firstAttr = $attributeGroup->first();
                 $data[$key] = $firstAttr ? $firstAttr->getCastedValue() : null;
             }
         }
 
+        // Process collection-based attributes (Repeater fields)
+        // Group by collection_name to find all repeater fields
+        $collectionNames = $collectionAttributes->pluck('collection_name')->unique();
+
+        foreach ($collectionNames as $collectionName) {
+            $collectionAttrs = $collectionAttributes->where('collection_name', $collectionName);
+            if ($collectionAttrs->isNotEmpty()) {
+                $data[$collectionName] = $this->extractRepeaterCollection($collectionAttrs);
+            }
+        }
+
         return $data;
+    }
+
+    /**
+     * Scan block schema to find which fields are currently marked as translatable
+     * This makes the schema the source of truth, not getTranslatableFields()
+     *
+     * @param string $blockClass
+     * @return array<int, string>
+     */
+    protected function getSchemaTranslatableFields(string $blockClass): array
+    {
+        if (! class_exists($blockClass) || ! method_exists($blockClass, 'getSchema')) {
+            return [];
+        }
+
+        $schema = $blockClass::getSchema();
+        $translatableFields = [];
+
+        $this->scanSchemaForTranslatableFields($schema, $translatableFields);
+
+        return $translatableFields;
+    }
+
+    /**
+     * Recursively scan schema components to find translatable fields
+     *
+     * Fields created with ->translatable() macro are Groups containing locale-specific fields
+     * like "headline.en", "headline.fr". We detect these patterns to find translatable fields.
+     *
+     * @param array $components
+     * @param array &$translatableFields
+     * @return void
+     */
+    protected function scanSchemaForTranslatableFields(array $components, array &$translatableFields): void
+    {
+        foreach ($components as $component) {
+            if (! is_object($component)) {
+                continue;
+            }
+
+            // Try to get name/statePath using reflection to avoid container initialization
+            $name = null;
+
+            // Try to get statePath property (for Form fields)
+            if (property_exists($component, 'statePath')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'statePath');
+                    $reflection->setAccessible(true);
+                    $name = $reflection->getValue($component);
+                } catch (\Exception $e) {
+                    // Continue
+                }
+            }
+
+            // Try to get name property (for Schema components)
+            if (! $name && property_exists($component, 'name')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'name');
+                    $reflection->setAccessible(true);
+                    $name = $reflection->getValue($component);
+                } catch (\Exception $e) {
+                    // Continue
+                }
+            }
+
+            // Check if name matches translatable pattern: fieldname.locale (e.g. "headline.en")
+            if ($name && preg_match('/^(.+)\.([a-z]{2})(_[A-Z]{2})?$/', $name, $matches)) {
+                $baseFieldName = $matches[1];
+
+                // Add base field name if not already added
+                if (! in_array($baseFieldName, $translatableFields)) {
+                    $translatableFields[] = $baseFieldName;
+                }
+            }
+
+            // Recursively scan child components
+            if (property_exists($component, 'childComponents')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'childComponents');
+                    $reflection->setAccessible(true);
+                    $childComponents = $reflection->getValue($component);
+
+                    if (is_array($childComponents)) {
+                        foreach ($childComponents as $children) {
+                            if (is_array($children)) {
+                                $this->scanSchemaForTranslatableFields($children, $translatableFields);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue if we can't access the property
+                }
+            }
+        }
+    }
+
+    /**
+     * Detect if a data key is a repeater field by analyzing structure
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isRepeaterData($value): bool
+    {
+        // Must be an array
+        if (!is_array($value) || empty($value)) {
+            return false;
+        }
+
+        // Check if it's a numeric-indexed array of associative arrays
+        // This is the signature of repeater data
+        $isNumericKeys = array_keys($value) === range(0, count($value) - 1);
+
+        if (!$isNumericKeys) {
+            return false;
+        }
+
+        // Check first item - should be an associative array
+        $firstItem = reset($value);
+
+        return is_array($firstItem) && !empty($firstItem) && array_keys($firstItem) !== range(0, count($firstItem) - 1);
+    }
+
+    /**
+     * Detect which fields within repeater items are translatable
+     *
+     * @param array $items Repeater items
+     * @return array<int, string>
+     */
+    protected function getRepeaterTranslatableFieldsFromData(array $items): array
+    {
+        $translatableFields = [];
+
+        if (empty($items)) {
+            return $translatableFields;
+        }
+
+        // Analyze first item to find translatable fields
+        $firstItem = reset($items);
+
+        foreach ($firstItem as $key => $value) {
+            // If value is a locale-keyed array, it's translatable
+            if ($this->isLocaleKeyedArray($value)) {
+                $translatableFields[] = $key;
+            }
+        }
+
+        return $translatableFields;
+    }
+
+    /**
+     * Extract and reconstruct repeater collection from EAV rows
+     *
+     * @param \Illuminate\Support\Collection $attributes
+     * @return array
+     */
+    protected function extractRepeaterCollection($attributes): array
+    {
+        $items = [];
+
+        // Group by collection_index (each represents one repeater item)
+        $groupedByIndex = $attributes->groupBy('collection_index');
+
+        foreach ($groupedByIndex as $index => $itemAttrs) {
+            $item = [];
+
+            // Group attributes within this item by key
+            foreach ($itemAttrs->groupBy('key') as $key => $keyAttrs) {
+                // Check if this field has multiple locales (translatable)
+                $hasMultipleLocales = $keyAttrs->whereNotNull('locale')->count() > 1 ||
+                                      ($keyAttrs->whereNotNull('locale')->count() === 1 && $keyAttrs->first()->translatable);
+
+                if ($hasMultipleLocales || $keyAttrs->first()->translatable) {
+                    // Build locale array for translatable fields
+                    $item[$key] = [];
+                    foreach ($keyAttrs as $attr) {
+                        if ($attr->locale) {
+                            $item[$key][$attr->locale] = $attr->getCastedValue();
+                        }
+                    }
+                } else {
+                    // Single value for non-translatable fields
+                    $item[$key] = $keyAttrs->first()->getCastedValue();
+                }
+            }
+
+            $items[$index] = $item;
+        }
+
+        // Sort by index and reindex array
+        ksort($items);
+        return array_values($items);
     }
 
     /**
@@ -519,10 +821,22 @@ class BlockManager extends Field
             return;
         }
 
-        $translatableFields = $blockType::getTranslatableFields();
+        // Use schema scanning to determine translatable fields (source of truth)
+        // Falls back to getTranslatableFields() if schema scanning fails
+        $schemaTranslatableFields = $this->getSchemaTranslatableFields($blockType);
+        $legacyTranslatableFields = method_exists($blockType, 'getTranslatableFields')
+            ? $blockType::getTranslatableFields()
+            : [];
 
-        \Log::info('BlockManager: Translatable fields', [
-            'translatable_fields' => $translatableFields,
+        // Prefer schema-based, fallback to legacy method
+        $translatableFields = ! empty($schemaTranslatableFields)
+            ? $schemaTranslatableFields
+            : $legacyTranslatableFields;
+
+        \Log::info('BlockManager: Translatable fields for saving', [
+            'schema_based' => $schemaTranslatableFields,
+            'legacy_method' => $legacyTranslatableFields,
+            'using' => $translatableFields,
         ]);
 
         // Delete existing attributes
@@ -549,6 +863,18 @@ class BlockManager extends Field
                     'key' => $key,
                 ]);
 
+                continue;
+            }
+
+            // Check if this is a Repeater field by data structure
+            if ($this->isRepeaterData($value)) {
+                \Log::debug('BlockManager: Processing repeater field', [
+                    'key' => $key,
+                    'items_count' => is_array($value) ? count($value) : 0,
+                ]);
+
+                $count = $this->saveRepeaterCollection($block, $key, $value, $sortOrder);
+                $createdAttributesCount += $count;
                 continue;
             }
 
@@ -597,6 +923,81 @@ class BlockManager extends Field
     }
 
     /**
+     * Save repeater collection as EAV rows
+     *
+     * @param AtelierBlock $block
+     * @param string $collectionName
+     * @param array $items
+     * @param int &$sortOrder
+     * @return int Number of attributes created
+     */
+    protected function saveRepeaterCollection(
+        AtelierBlock $block,
+        string $collectionName,
+        array $items,
+        int &$sortOrder
+    ): int {
+        $translatableFields = $this->getRepeaterTranslatableFieldsFromData($items);
+        $createdCount = 0;
+
+        \Log::info('BlockManager: saveRepeaterCollection started', [
+            'collection_name' => $collectionName,
+            'items_count' => count($items),
+            'translatable_fields' => $translatableFields,
+        ]);
+
+        foreach ($items as $index => $item) {
+            foreach ($item as $fieldKey => $fieldValue) {
+                // Skip null/empty values
+                if ($fieldValue === null || $fieldValue === '') {
+                    continue;
+                }
+
+                if (in_array($fieldKey, $translatableFields)) {
+                    // Translatable field - create one attribute per locale
+                    if (is_array($fieldValue)) {
+                        foreach ($fieldValue as $locale => $localeValue) {
+                            if ($localeValue !== null && $localeValue !== '') {
+                                $this->createAttribute(
+                                    block: $block,
+                                    key: $fieldKey,
+                                    value: $localeValue,
+                                    locale: $locale,
+                                    translatable: true,
+                                    sortOrder: $sortOrder++,
+                                    collectionName: $collectionName,
+                                    collectionIndex: $index
+                                );
+                                $createdCount++;
+                            }
+                        }
+                    }
+                } else {
+                    // Non-translatable field
+                    $this->createAttribute(
+                        block: $block,
+                        key: $fieldKey,
+                        value: $fieldValue,
+                        locale: null,
+                        translatable: false,
+                        sortOrder: $sortOrder++,
+                        collectionName: $collectionName,
+                        collectionIndex: $index
+                    );
+                    $createdCount++;
+                }
+            }
+        }
+
+        \Log::info('BlockManager: saveRepeaterCollection completed', [
+            'collection_name' => $collectionName,
+            'created_attributes' => $createdCount,
+        ]);
+
+        return $createdCount;
+    }
+
+    /**
      * Check if an array is locale-keyed (has locale codes as keys)
      */
     protected function isLocaleKeyedArray($value): bool
@@ -626,7 +1027,9 @@ class BlockManager extends Field
         mixed $value,
         ?string $locale,
         bool $translatable,
-        int $sortOrder
+        int $sortOrder,
+        ?string $collectionName = null,
+        ?int $collectionIndex = null
     ): void {
         // Determine type
         $type = match (true) {
@@ -656,6 +1059,8 @@ class BlockManager extends Field
                 'locale' => $locale,
                 'translatable' => $translatable,
                 'sort_order' => $sortOrder,
+                'collection_name' => $collectionName,
+                'collection_index' => $collectionIndex,
             ]);
 
             \Log::debug('BlockManager: Attribute created', [
@@ -664,6 +1069,8 @@ class BlockManager extends Field
                 'type' => $type,
                 'locale' => $locale,
                 'translatable' => $translatable,
+                'collection_name' => $collectionName,
+                'collection_index' => $collectionIndex,
                 'value_length' => strlen($value),
             ]);
 
@@ -673,6 +1080,8 @@ class BlockManager extends Field
                 'key' => $key,
                 'type' => $type,
                 'locale' => $locale,
+                'collection_name' => $collectionName,
+                'collection_index' => $collectionIndex,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

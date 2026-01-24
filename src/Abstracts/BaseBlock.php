@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 abstract class BaseBlock
 {
-    use InteractsWithSchema, HasCommonOptions;
+    use HasCommonOptions, InteractsWithSchema;
 
     protected array $data = [];
 
@@ -93,8 +93,17 @@ abstract class BaseBlock
     {
         $locale = $locale ?? $this->locale ?? app()->getLocale();
 
-        // Check if this field is translatable
-        if (in_array($key, static::getTranslatableFields())) {
+        // Get the raw value first
+        $rawValue = $this->get($key);
+
+        // Check if the value is already in locale-keyed format (e.g., {"en":"value", "fr":"value"})
+        // This is more reliable than checking getTranslatableFields()
+        if (is_array($rawValue) && $this->isLocaleKeyedArray($rawValue)) {
+            return $rawValue[$locale] ?? $rawValue[array_key_first($rawValue)] ?? null;
+        }
+
+        // Fallback: Check getTranslatableFields() for performance optimization
+        if (method_exists(static::class, 'getTranslatableFields') && in_array($key, static::getTranslatableFields())) {
             $value = $this->get("{$key}.{$locale}") ?? $this->get($key);
 
             // If the value is still an array (legacy multi-locale data), try to extract the locale
@@ -141,6 +150,27 @@ abstract class BaseBlock
     public function validate(): bool
     {
         // Override for custom validation
+        return true;
+    }
+
+    /**
+     * Check if an array is locale-keyed (e.g., {"en": "value", "fr": "value"})
+     */
+    protected function isLocaleKeyedArray($value): bool
+    {
+        if (! is_array($value) || empty($value)) {
+            return false;
+        }
+
+        $availableLocales = array_keys(config('atelier.locales', ['en' => 'English']));
+
+        // Check if all keys are valid locale codes
+        foreach (array_keys($value) as $key) {
+            if (! in_array($key, $availableLocales)) {
+                return false;
+            }
+        }
+
         return true;
     }
 }

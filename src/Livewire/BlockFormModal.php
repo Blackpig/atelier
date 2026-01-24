@@ -2,16 +2,19 @@
 
 namespace BlackpigCreatif\Atelier\Livewire;
 
-use Filament\Forms\Components\Component;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use Livewire\Component as LivewireComponent;
 
-class BlockFormModal extends LivewireComponent implements HasForms
+class BlockFormModal extends LivewireComponent implements HasActions, HasForms
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?string $blockType = null;
@@ -27,6 +30,8 @@ class BlockFormModal extends LivewireComponent implements HasForms
     public ?string $previewHtml = null;
 
     public array $blockData = [];
+
+    public array $fieldConfigurations = [];
 
     protected $listeners = [
         'openBlockFormModal' => 'open',
@@ -60,12 +65,88 @@ class BlockFormModal extends LivewireComponent implements HasForms
             return $schema->schema([]);
         }
 
+        // Store configurations in a temporary registry that the traits can access
+        // This allows field creation to use per-resource configurations
+        if (! empty($this->fieldConfigurations)) {
+            foreach ($this->fieldConfigurations as $fieldName => $config) {
+                \BlackpigCreatif\Atelier\Support\BlockFieldConfig::registerTemporary(
+                    $this->blockType,
+                    $fieldName,
+                    $config
+                );
+            }
+        }
+
+        // Get the schema - traits will apply temporary configs
+        $schemaComponents = $this->blockType::getSchema();
+
+        // Apply configurations to any remaining fields that don't check the registry
+        // This allows configuring ANY field, not just those created by traits
+        if (! empty($this->fieldConfigurations)) {
+            $schemaComponents = $this->applyConfigurationsToComponents($schemaComponents, $this->fieldConfigurations);
+        }
+
+        // Clear temporary configurations after schema is built
+        \BlackpigCreatif\Atelier\Support\BlockFieldConfig::clearTemporary();
+
         return $schema
-            ->schema($this->blockType::getSchema())
+            ->schema($schemaComponents)
             ->statePath('blockData');
     }
 
-    public function open($componentStatePath, $blockType, $uuid = null, $data = []): void
+    /**
+     * Recursively apply configurations to components by field name
+     * This scans the entire component tree BEFORE they're added to containers
+     */
+    protected function applyConfigurationsToComponents(array $components, array $configurations, int $depth = 0): array
+    {
+        foreach ($components as $component) {
+            if (! ($component instanceof Component)) {
+                continue;
+            }
+
+            // Check if this component has a name that matches a configuration
+            if (method_exists($component, 'getName')) {
+                $componentName = $component->getName();
+
+                if ($componentName && isset($configurations[$componentName]) && is_array($configurations[$componentName])) {
+                    // Apply each configuration method
+                    foreach ($configurations[$componentName] as $method => $value) {
+                        if (method_exists($component, $method)) {
+                            $component->{$method}($value);
+                        }
+                    }
+                }
+            }
+
+            // Recursively process child components
+            // In Filament v4, child components are stored in $childComponents property
+            if (property_exists($component, 'childComponents')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'childComponents');
+                    $reflection->setAccessible(true);
+                    $childComponents = $reflection->getValue($component);
+
+                    // $childComponents is an associative array keyed by 'default' or other keys
+                    if (is_array($childComponents) && ! empty($childComponents)) {
+                        foreach ($childComponents as $key => $children) {
+                            // Children can be an array of components or a closure
+                            if (is_array($children)) {
+                                $this->applyConfigurationsToComponents($children, $configurations, $depth + 1);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue if we can't access the property
+                }
+            }
+        }
+
+        return $components;
+    }
+
+
+    public function open($componentStatePath, $blockType, $uuid = null, $data = [], $fieldConfigurations = []): void
     {
         // Handle both array (from Livewire 3 dispatch) and individual parameters
         if (is_array($componentStatePath)) {
@@ -74,11 +155,13 @@ class BlockFormModal extends LivewireComponent implements HasForms
             $blockType = $params['blockType'] ?? null;
             $uuid = $params['uuid'] ?? null;
             $data = $params['data'] ?? [];
+            $fieldConfigurations = $params['fieldConfigurations'] ?? [];
         }
 
         $this->blockType = $blockType;
         $this->uuid = $uuid;
         $this->componentStatePath = $componentStatePath;
+        $this->fieldConfigurations = $fieldConfigurations;
         $this->isOpen = true;
         $this->isPreview = false;  // Ensure we're in form mode, not preview
         $this->previewHtml = null;  // Clear any previous preview HTML
@@ -167,6 +250,7 @@ class BlockFormModal extends LivewireComponent implements HasForms
         $this->uuid = null;
         $this->componentStatePath = null;
         $this->blockData = [];
+        $this->fieldConfigurations = [];
 
         // Reset form state
         $this->form->fill([]);

@@ -155,10 +155,25 @@ class {{className}} extends BaseBlock
         ];
     }
 
-    public static function getTranslatableFields(): array
-    {
-        return ['title', 'content'];
-    }
+    /**
+     * Optional: Define translatable fields for frontend performance optimization.
+     *
+     * The admin panel automatically detects translatable fields by scanning the schema,
+     * so this method is not required. However, including it can improve frontend
+     * rendering performance by avoiding schema scanning on every page load.
+     *
+     * Only include this method if:
+     * - Your block is used frequently on high-traffic pages
+     * - You want to optimize frontend performance
+     * - Your translatable fields are stable and won't change often
+     *
+     * If omitted, the system will automatically scan the schema to determine
+     * which fields are translatable (both in admin and frontend).
+     */
+    // public static function getTranslatableFields(): array
+    // {
+    //     return ['title', 'content'];
+    // }
 
     public function render(): View
     {

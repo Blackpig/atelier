@@ -7,6 +7,7 @@
     $isReorderable = $isReorderable();
     $blockClasses = $getBlockClasses();
     $blockMetadata = $getBlockMetadata();
+    $fieldConfigurations = $getFieldConfigurations();
     $modalKey = 'block-form-modal-' . str_replace('.', '-', $statePath);
 @endphp
 
@@ -25,6 +26,7 @@
             statePath: @js($statePath),
             blockClasses: @js($blockClasses),
             blockMetadata: @js($blockMetadata),
+            fieldConfigurations: @js($fieldConfigurations),
             showTypeSelector: false,
 
             init() {
@@ -138,7 +140,8 @@
                     componentStatePath: this.statePath,
                     blockType: blockType,
                     uuid: null,
-                    data: {}
+                    data: {},
+                    fieldConfigurations: this.fieldConfigurations[blockType] || {}
                 });
             },
 
@@ -161,7 +164,8 @@
                     componentStatePath: this.statePath,
                     blockType: block.type,
                     uuid: block.uuid,
-                    data: data
+                    data: data,
+                    fieldConfigurations: this.fieldConfigurations[block.type] || {}
                 });
             },
 

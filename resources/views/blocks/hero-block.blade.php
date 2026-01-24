@@ -77,27 +77,16 @@
                     </div>
                 @endif
                 
-                {{-- Call to Action Button --}}
-                @if(($ctaText = $block->getTranslated('cta_text')) && $cta_url)
-                    <div class="mt-8 animate-fade-in animation-delay-600">
-                        <a 
-                            href="{{ $cta_url }}" 
-                            class="inline-block px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-300"
-                            @if($cta_new_tab ?? false) 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                aria-label="{{ $ctaText }} (opens in new tab)"
-                            @else
-                                aria-label="{{ $ctaText }}"
-                            @endif
-                        >
-                            {{ $ctaText }}
-                            @if($cta_new_tab ?? false)
-                                <svg class="inline-block w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                            @endif
-                        </a>
+                {{-- Call to Action Buttons --}}
+                @if($block->hasCallToActions())
+                    <div class="mt-8 flex flex-wrap gap-4 justify-{{ str_contains($content_alignment ?? '', 'center') ? 'center' : (str_contains($content_alignment ?? '', 'end') ? 'end' : 'start') }} animate-fade-in animation-delay-600">
+                        @foreach($block->getCallToActions() as $index => $cta)
+                            <x-atelier::call-to-action
+                                :cta="$cta"
+                                :block="$block"
+                                :index="$index"
+                            />
+                        @endforeach
                     </div>
                 @endif
                 

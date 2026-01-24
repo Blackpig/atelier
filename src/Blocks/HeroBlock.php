@@ -3,6 +3,7 @@
 namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
+use BlackpigCreatif\Atelier\Concerns\HasCallToActions;
 use BlackpigCreatif\Atelier\Conversions\BlockHeroConversion;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
@@ -16,6 +17,7 @@ use Illuminate\Contracts\View\View;
 
 class HeroBlock extends BaseBlock
 {
+    use HasCallToActions;
     use HasRetouchMedia;
 
     public static function getLabel(): string
@@ -62,21 +64,7 @@ class HeroBlock extends BaseBlock
 
             Section::make('Call to Action')
                 ->schema([
-                    TextInput::make('cta_text')
-                        ->label('Button Text')
-                        ->maxLength(50)
-                        ->placeholder('Get Started')
-                        ->translatable(),  // ← Must be LAST
-
-                    TextInput::make('cta_url')
-                        ->label('Button URL')
-                        ->url()
-                        ->placeholder('https://example.com/signup')
-                        ->helperText('Shared across all languages'),
-
-                    Toggle::make('cta_new_tab')
-                        ->label('Open in new tab')
-                        ->default(false),
+                    static::getCallToActionsField()
                 ])
                 ->collapsible(),
 
@@ -153,7 +141,7 @@ class HeroBlock extends BaseBlock
 
     public static function getTranslatableFields(): array
     {
-        return ['headline', 'subheadline', 'description', 'cta_text'];
+        return ['headline', 'subheadline', 'description'];
     }
 
     public function render(): View

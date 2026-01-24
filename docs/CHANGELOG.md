@@ -2,6 +2,36 @@
 
 All notable changes to `atelier` will be documented in this file.
 
+## 2.1.0 - 2026-01-24
+
+### Added
+- **Schema Scanning Architecture**: Automatic detection of translatable fields by scanning block schemas
+- **Optional getTranslatableFields()**: Method is now optional - schema scanning is the source of truth
+- **Global Field Configuration**: Set block field defaults via `BlockFieldConfig::register()` in service provider
+- **Per-Resource Field Configuration**: Override global defaults per resource using `configureField()`
+- **HasCallToActions Trait**: Reusable repeater-based CTA system with full translation support
+- **Collection-Based EAV for Repeaters**: Smart database structure for repeater fields with translatable content
+- **Automatic Translatable Status Handling**: Add/remove `->translatable()` without data corruption or migrations
+- **Call-to-Action Blade Component**: Reusable `<x-atelier::call-to-action>` component for rendering CTAs
+- **Field Configuration for ANY Field**: Not just trait-created fields - configure any Filament field in BlockManager
+
+### Changed
+- **BlockManager**: Now uses schema scanning to determine translatable fields during save
+- **AtelierBlock**: Prefers `getTranslatableFields()` for performance, falls back to schema scanning
+- **BaseBlock**: Enhanced `getTranslated()` to check data structure first before method fallback
+- **MakeAtelierBlockCommand**: Updated stub to comment out `getTranslatableFields()` by default with documentation
+
+### Improved
+- **Translatable Detection**: Automatically detects CTA labels and other repeater translatable fields
+- **Data Structure Detection**: Handles fields that change translatable status without manual intervention
+- **Frontend Performance**: Optional `getTranslatableFields()` provides performance optimization when needed
+- **Developer Experience**: Less manual configuration, more automatic behavior
+
+### Fixed
+- Missing `isLocaleKeyedArray()` method in BaseBlock
+- Container initialization errors when scanning schema components
+- Translatable field detection in nested components and repeaters
+
 ## 2.0.0 - 2026-01-12
 
 ### Changed

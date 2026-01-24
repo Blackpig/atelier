@@ -1,14 +1,138 @@
 # Atelier Migration Guide
 
-Guide to upgrading Atelier blocks to use responsive images.
+Guide to upgrading Atelier blocks.
 
 ## Overview
 
 This guide covers:
+- **Schema Scanning & Optional getTranslatableFields()** (Latest)
 - Migrating from FileUpload to RetouchMediaUpload
 - Updating blocks to use HasRetouchMedia
 - Converting to BlockGalleryConversion/BlockHeroConversion presets
 - Updating Blade views for responsive rendering
+
+## Latest: Schema Scanning Architecture
+
+### getTranslatableFields() is Now Optional
+
+**What Changed:**
+
+Atelier now uses **schema scanning** as the source of truth for determining translatable fields. The `getTranslatableFields()` method is now **optional** and only needed for frontend performance optimization.
+
+### Do You Need to Update?
+
+**No! Your existing blocks continue to work perfectly.** This is a **non-breaking change**.
+
+- ✅ Blocks with `getTranslatableFields()` - Work perfectly, preferred for frontend performance
+- ✅ Blocks without `getTranslatableFields()` - Work perfectly, use automatic schema scanning
+- ✅ No migration needed - Your existing code is fine
+
+### When to Update
+
+**Remove `getTranslatableFields()`** if:
+- Your block is rarely used or low-traffic
+- Your translatable fields change frequently
+- You want to reduce maintenance burden
+
+**Keep `getTranslatableFields()`** if:
+- Your block is used on high-traffic pages
+- You want optimal frontend rendering performance
+- Your translatable fields are stable
+
+### How to Update (Optional)
+
+**Before:**
+```php
+public static function getTranslatableFields(): array
+{
+    return ['headline', 'description'];
+}
+```
+
+**After (if removing):**
+```php
+/**
+ * Optional: Define translatable fields for frontend performance optimization.
+ *
+ * The admin panel automatically detects translatable fields by scanning the schema,
+ * so this method is not required. Omitted for automatic detection.
+ */
+// public static function getTranslatableFields(): array
+// {
+//     return ['headline', 'description'];
+// }
+```
+
+**Or simply delete the method entirely** - the schema scanner will handle everything automatically.
+
+### Benefits
+
+✅ **No manual updates needed** - Add/remove `->translatable()` and it just works
+✅ **Automatic detection** - Schema scanning finds translatable fields including those in repeaters
+✅ **Handles status changes** - Remove `->translatable()` from a field and data is handled correctly
+✅ **No migrations** - Existing data continues to work when fields change translatable status
+
+## Field Configuration Patterns
+
+### Global vs Per-Resource Configuration
+
+Atelier now supports two levels of field configuration for better code organization.
+
+### Migrating Repeated Configurations to Global
+
+**Before (Repeated in every resource):**
+```php
+// HomePageResource.php
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'ctas', ['maxItems' => 3])
+    ->configureField(HeroBlock::class, 'headline', ['maxLength' => 120])
+
+// AboutPageResource.php
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'ctas', ['maxItems' => 3])  // Repeated!
+    ->configureField(HeroBlock::class, 'headline', ['maxLength' => 120])  // Repeated!
+```
+
+**After (Global defaults + per-resource overrides):**
+
+**In `app/Providers/AtelierServiceProvider.php`:**
+```php
+use BlackpigCreatif\Atelier\Support\BlockFieldConfig;
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+
+public function boot(): void
+{
+    // Set global defaults once
+    BlockFieldConfig::register(HeroBlock::class, 'ctas', [
+        'maxItems' => 3,
+    ]);
+
+    BlockFieldConfig::register(HeroBlock::class, 'headline', [
+        'maxLength' => 120,
+    ]);
+}
+```
+
+**In your resources (only override when needed):**
+```php
+// HomePageResource.php - allow more CTAs
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'ctas', ['maxItems' => 5])  // Override
+
+// AboutPageResource.php - uses global defaults (no configuration needed!)
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+```
+
+### Benefits
+
+✅ **DRY** - Set defaults once, reuse everywhere
+✅ **Override when needed** - Per-resource configs override global
+✅ **Cleaner code** - Resources only configure exceptions
+✅ **Easier maintenance** - Change default in one place
 
 ## Block Migration
 

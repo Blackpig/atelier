@@ -120,6 +120,24 @@ return [
                 'triangle' => ['label' => 'Triangle', 'class' => 'atelier-divider-triangle'],
             ],
         ],
+
+        'button_styles' => [
+            'enabled' => true,
+            'options' => [
+                'primary' => [
+                    'label' => 'Primary',
+                    'class' => 'btn btn-primary',
+                ],
+                'secondary' => [
+                    'label' => 'Secondary',
+                    'class' => 'btn btn-secondary',
+                ],
+                'alternate' => [
+                    'label' => 'Alternate',
+                    'class' => 'btn btn-alternate',
+                ],
+            ],
+        ],
     ],
      
     /*

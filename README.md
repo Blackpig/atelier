@@ -114,7 +114,163 @@ BlockManager::make('blocks')
     ])
 ```
 
-### 3. Render blocks in your view
+**Optional:** Configure field defaults globally in `AtelierServiceProvider`:
+
+```php
+use BlackpigCreatif\Atelier\Support\BlockFieldConfig;
+
+// In AtelierServiceProvider::boot()
+BlockFieldConfig::register(HeroBlock::class, 'ctas', ['maxItems' => 3]);
+BlockFieldConfig::register(HeroBlock::class, 'headline', ['maxLength' => 120]);
+```
+
+Then override per-resource when needed:
+
+```php
+// HomePage - allow more CTAs
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'ctas', ['maxItems' => 5])
+```
+
+See [Field Configuration](#3-field-configuration) for details.
+
+### 3. Field Configuration
+
+Atelier provides two levels of field configuration:
+
+#### Global Configuration (Service Provider)
+
+Set default field configurations that apply to **all resources** using the block.
+
+**Create `app/Providers/AtelierServiceProvider.php` if it doesn't exist:**
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class AtelierServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        // Global block field configurations
+    }
+}
+```
+
+**Register in `bootstrap/providers.php`:**
+
+```php
+return [
+    App\Providers\AppServiceProvider::class,
+    App\Providers\AtelierServiceProvider::class,  // Add this line
+];
+```
+
+**Add your global configurations:**
+
+```php
+use BlackpigCreatif\Atelier\Support\BlockFieldConfig;
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+use BlackpigCreatif\Atelier\Blocks\TextBlock;
+
+public function boot(): void
+{
+    // Global defaults for HeroBlock CTAs
+    BlockFieldConfig::register(HeroBlock::class, 'ctas', [
+        'maxItems' => 3,  // Default: max 3 CTAs everywhere
+    ]);
+
+    // Global defaults for HeroBlock headline
+    BlockFieldConfig::register(HeroBlock::class, 'headline', [
+        'maxLength' => 120,  // Default: 120 char limit everywhere
+    ]);
+
+    // Global defaults for TextBlock title
+    BlockFieldConfig::register(TextBlock::class, 'title', [
+        'maxLength' => 80,
+        'required' => true,
+    ]);
+}
+```
+
+#### Per-Resource Configuration (Override)
+
+Override global defaults for specific resources using `configureField()` in your Filament resource:
+
+```php
+use BlackpigCreatif\Atelier\Forms\Components\BlockManager;
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
+
+// HomePage - allow more CTAs than default
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'headline', [
+        'maxLength' => 60,  // Override: shorter on homepage
+    ])
+    ->configureField(HeroBlock::class, 'ctas', [
+        'maxItems' => 5,    // Override: more CTAs on homepage
+    ])
+
+// SubPages - stricter limits
+BlockManager::make('blocks')
+    ->blocks([HeroBlock::class])
+    ->configureField(HeroBlock::class, 'ctas', [
+        'maxItems' => 1,    // Override: only 1 CTA on subpages
+    ])
+```
+
+#### How It Works
+
+1. **Global configs** apply everywhere by default
+2. **Per-resource configs** override global configs for that resource
+3. If neither is set, the field uses its original definition
+
+**Priority Order:**
+```
+Per-Resource Config (highest priority)
+    ↓
+Global Config
+    ↓
+Original Field Definition (lowest priority)
+```
+
+#### Configurable Properties
+
+This works with **any field type** - not just fields created by traits. You can configure any Filament field method:
+
+- `maxLength`, `minLength` for TextInput fields
+- `maxItems`, `minItems` for Repeater fields
+- `required`, `disabled` for any field
+- `maxFiles` for FileUpload fields
+- `columns` for Grid/Group fields
+- Any Filament field method that exists on the component
+
+#### Example Use Cases
+
+**Global Defaults with Per-Resource Overrides:**
+```php
+// In AtelierServiceProvider - set sensible defaults
+BlockFieldConfig::register(HeroBlock::class, 'ctas', ['maxItems' => 2]);
+
+// In HomePageResource - allow more
+->configureField(HeroBlock::class, 'ctas', ['maxItems' => 4])
+
+// In BlogPostResource - allow fewer
+->configureField(HeroBlock::class, 'ctas', ['maxItems' => 1])
+```
+
+**Common Scenarios:**
+- HomePage allows 4 CTAs, SubPages allow only 1
+- Product pages have longer headlines than blog posts
+- Different max image counts for different content types
+- Enable/disable fields based on resource type
+- Set company-wide defaults, override for special cases
+
+### 4. Render blocks in your view
 
 ```blade
 {{-- Using the Blade directive (recommended) --}}
@@ -407,10 +563,17 @@ class QuoteBlock extends BaseBlock
         ];
     }
 
-    public static function getTranslatableFields(): array
-    {
-        return ['quote', 'author'];
-    }
+    /**
+     * Optional: Define translatable fields for frontend performance optimization.
+     *
+     * The admin panel automatically detects translatable fields by scanning the schema,
+     * so this method is not required. However, including it can improve frontend
+     * rendering performance by avoiding schema scanning on every page load.
+     */
+    // public static function getTranslatableFields(): array
+    // {
+    //     return ['quote', 'author'];
+    // }
 
     public function render(): View
     {
@@ -515,6 +678,35 @@ public static function getIcon(): string | IconSize | Htmlable | null
 }
 ```
 
+## Architecture: Schema Scanning
+
+Atelier uses **schema scanning** as the source of truth for determining which fields are translatable. This provides several benefits:
+
+### How It Works
+
+1. **Admin Panel (Saving)**:
+   - Scans your block's schema to detect fields with `->translatable()`
+   - Automatically saves translatable fields with locale stamps to the database
+   - No manual configuration needed
+
+2. **Frontend (Rendering)**:
+   - Prefers `getTranslatableFields()` method if defined (for performance)
+   - Falls back to schema scanning if method doesn't exist
+   - Ensures blocks work correctly regardless of method presence
+
+3. **Data Structure Detection**:
+   - Checks actual data format first (locale-keyed arrays vs plain values)
+   - Handles translatable status changes automatically
+   - No migration needed when adding/removing `->translatable()`
+
+### Benefits
+
+✅ **No manual tracking** - Add/remove `->translatable()` and it just works
+✅ **Automatic CTA handling** - Repeater fields with translatable children work out of the box
+✅ **Schema is truth** - What you define in your schema is what gets saved
+✅ **Performance optional** - Use `getTranslatableFields()` only when you need the speed
+✅ **Migration-friendly** - Change field translatable status without breaking existing data
+
 ## Translation Support
 
 Atelier includes an elegant inline translation system with global locale switching:
@@ -575,16 +767,30 @@ Configure your locales in `config/atelier.php`:
 'default_locale' => 'en',
 ```
 
-### Declare Translatable Fields
+### Declare Translatable Fields (Optional)
 
-For proper data handling, declare which fields are translatable:
+**Schema scanning is now the source of truth** - Atelier automatically detects which fields are translatable by scanning your block's schema. The `getTranslatableFields()` method is now **optional** and only needed for frontend performance optimization.
 
 ```php
+/**
+ * Optional: Define translatable fields for frontend performance optimization.
+ *
+ * The admin panel automatically detects translatable fields by scanning the schema,
+ * so this method is not required. However, including it can improve frontend
+ * rendering performance by avoiding schema scanning on every page load.
+ *
+ * Only include this method if:
+ * - Your block is used frequently on high-traffic pages
+ * - You want to optimize frontend performance
+ * - Your translatable fields are stable and won't change often
+ */
 public static function getTranslatableFields(): array
 {
     return ['headline', 'description', 'cta_text'];
 }
 ```
+
+**When you remove `->translatable()` from a field**, the schema scanner automatically detects the change and handles the data correctly - no manual cleanup needed.
 
 ### Retrieve Translated Content
 
@@ -674,6 +880,242 @@ $page->blocks;              // All blocks
 $page->publishedBlocks;     // Only published blocks
 $page->renderBlocks($locale); // Render all blocks
 ```
+
+## Call to Actions (CTAs)
+
+The `HasCallToActions` trait provides a powerful, reusable way to add multiple call-to-action buttons to any block with full translation support.
+
+### Why Use HasCallToActions?
+
+- ✅ **Repeater-based** - Add unlimited CTAs (or set a limit)
+- ✅ **Fully translatable** - Button labels support all configured locales
+- ✅ **Flexible URLs** - Accepts both full URLs and relative paths
+- ✅ **Icon support** - Optional Heroicons for buttons
+- ✅ **Style variants** - Config-driven button styles (Primary, Secondary, etc.)
+- ✅ **Target control** - Open in new tab option
+- ✅ **Automatic EAV storage** - Smart collection-based database structure
+
+### Adding CTAs to Your Block
+
+**1. Add the trait:**
+
+```php
+use BlackpigCreatif\Atelier\Concerns\HasCallToActions;
+
+class HeroBlock extends BaseBlock
+{
+    use HasCallToActions;
+    use HasCommonOptions;
+    // ...
+}
+```
+
+**2. Add the field to your schema:**
+
+```php
+public static function getSchema(): array
+{
+    return [
+        Section::make('Content')
+            ->schema([
+                TextInput::make('headline')
+                    ->required()
+                    ->translatable(),
+            ]),
+
+        Section::make('Call to Action')
+            ->schema([
+                static::getCallToActionsField()
+                    ->maxItems(3),  // Optional: limit number of CTAs
+            ])
+            ->collapsible(),
+
+        ...static::getCommonOptionsSchema(),
+    ];
+}
+```
+
+**Note:** You do NOT need to add CTA fields to `getTranslatableFields()` - the schema scanner automatically detects translatable fields within repeaters. In fact, `getTranslatableFields()` is now entirely optional for all blocks (see [Schema Scanning Architecture](#architecture-schema-scanning)).
+
+### CTA Fields
+
+Each CTA in the repeater includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| **Label** | TextInput (translatable) | Button text - supports all locales |
+| **URL** | TextInput | Full URL (`https://...`) or relative path (`/page`) |
+| **Icon** | TextInput (optional) | Heroicon name (e.g., `heroicon-o-arrow-right`) |
+| **Style** | Select | Button style from config (Primary, Secondary, Alternate) |
+| **New Tab** | Toggle | Whether to open link in new window |
+
+### Rendering CTAs in Templates
+
+**Option 1: Using the Blade Component (Recommended)**
+
+```blade
+@if($block->hasCallToActions())
+    <div class="flex gap-4">
+        @foreach($block->getCallToActions() as $index => $cta)
+            <x-atelier::call-to-action
+                :cta="$cta"
+                :block="$block"
+                :index="$index"
+            />
+        @endforeach
+    </div>
+@endif
+```
+
+**Option 2: Manual Rendering**
+
+```blade
+@if($block->hasCallToActions())
+    <div class="flex gap-4">
+        @foreach($block->getCallToActions() as $cta)
+            <a
+                href="{{ $cta['url'] }}"
+                target="{{ $block->getCallToActionTarget($cta) }}"
+                class="{{ $block->getCallToActionStyleClass($cta) }}"
+                @if($block->isExternalUrl($cta['url'])) rel="noopener noreferrer" @endif
+            >
+                @if(!empty($cta['icon']))
+                    <x-filament::icon :icon="$cta['icon']" class="w-5 h-5" />
+                @endif
+
+                {{ $block->getCallToActionLabel($cta) }}
+            </a>
+        @endforeach
+    </div>
+@endif
+```
+
+### Helper Methods
+
+```php
+// Check if block has CTAs
+$block->hasCallToActions(): bool
+
+// Get all CTAs
+$block->getCallToActions(): array
+
+// Get translated label (automatically uses current locale)
+$block->getCallToActionLabel($cta): string
+$block->getCallToActionLabel($cta, 'fr'): string  // Specific locale
+
+// Get CSS class from config
+$block->getCallToActionStyleClass($cta): string
+$block->getCallToActionStyleClass('primary'): string  // Or pass style key directly
+
+// Get target attribute
+$block->getCallToActionTarget($cta): string  // Returns '_blank' or '_self'
+
+// Check if URL is external
+$block->isExternalUrl($cta['url']): bool
+```
+
+### CTA Data Structure
+
+When you loop through `getCallToActions()`, each `$cta` is an array:
+
+```php
+[
+    'label' => ['en' => 'Get Started', 'fr' => 'Commencer'],  // Translatable
+    'url' => '/signup',
+    'icon' => 'heroicon-o-arrow-right',
+    'style' => 'primary',
+    'new_tab' => false,
+]
+```
+
+### Customizing Button Styles
+
+Configure button styles in `config/atelier.php`:
+
+```php
+'features' => [
+    'button_styles' => [
+        'enabled' => true,
+        'options' => [
+            'primary' => [
+                'label' => 'Primary',
+                'class' => 'btn btn-primary',  // Your CSS classes
+            ],
+            'secondary' => [
+                'label' => 'Secondary',
+                'class' => 'btn btn-secondary',
+            ],
+            'alternate' => [
+                'label' => 'Alternate',
+                'class' => 'btn btn-alternate',
+            ],
+            // Add your own styles
+            'ghost' => [
+                'label' => 'Ghost',
+                'class' => 'btn btn-ghost',
+            ],
+        ],
+    ],
+],
+```
+
+### Advanced Usage
+
+**Limit CTAs per block:**
+
+```php
+static::getCallToActionsField()
+    ->maxItems(2)  // Only allow 2 CTAs
+```
+
+**Require at least one CTA:**
+
+```php
+static::getCallToActionsField()
+    ->minItems(1)
+    ->defaultItems(1)  // Start with 1 CTA pre-added
+```
+
+**Customize the repeater:**
+
+```php
+static::getCallToActionsField()
+    ->maxItems(3)
+    ->label('Action Buttons')
+    ->addActionLabel('Add Button')
+    ->collapsible(false)
+    ->reorderable(false)
+```
+
+**Conditional display:**
+
+```blade
+@if($block->hasCallToActions())
+    <div class="hero-actions {{ $block->get('content_alignment') === 'text-center' ? 'justify-center' : 'justify-start' }}">
+        @foreach($block->getCallToActions() as $cta)
+            {{-- Custom rendering per alignment --}}
+        @endforeach
+    </div>
+@endif
+```
+
+### How It Works (Technical)
+
+The `HasCallToActions` trait leverages Atelier's collection-based EAV (Entity-Attribute-Value) system:
+
+1. **Form Level**: Repeater creates array of items with translatable labels
+2. **Save**: BlockManager detects repeater structure and saves to database:
+   - Each CTA stored with `collection_name='ctas'` and `collection_index=0,1,2...`
+   - Translatable labels stored as separate rows per locale
+   - Non-translatable fields (url, icon, style) stored once per item
+3. **Hydrate**: BlockManager reconstructs the array from EAV rows automatically
+4. **Render**: Helper methods handle locale resolution and attribute generation
+
+This architecture means:
+- ✅ No database migrations needed when adding new repeater fields
+- ✅ Works with any number of locales
+- ✅ Efficient querying and caching
+- ✅ Reusable pattern for other repeater-based features
 
 ## Media Handling
 

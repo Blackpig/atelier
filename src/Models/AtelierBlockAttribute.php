@@ -13,6 +13,7 @@ class AtelierBlockAttribute extends Model
         'value',
         'type',
         'collection_name',
+        'collection_index',
         'locale',
         'translatable',
         'sort_order',
@@ -21,6 +22,7 @@ class AtelierBlockAttribute extends Model
     protected $casts = [
         'translatable' => 'boolean',
         'sort_order' => 'integer',
+        'collection_index' => 'integer',
     ];
 
     public function __construct(array $attributes = [])

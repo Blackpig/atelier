@@ -71,6 +71,109 @@ class AtelierBlock extends Model
         );
     }
 
+    /**
+     * Get translatable fields for a block class
+     * Tries schema scanning first (source of truth), falls back to getTranslatableFields() method
+     *
+     * @param string $class
+     * @return array
+     */
+    protected function getTranslatableFieldsForBlock(string $class): array
+    {
+        // For frontend performance, prefer the legacy method if it exists
+        // It's faster than schema scanning and is sufficient for rendering
+        if (method_exists($class, 'getTranslatableFields')) {
+            return $class::getTranslatableFields();
+        }
+
+        // Fallback: scan schema if getTranslatableFields() doesn't exist
+        // This ensures blocks without the method still work correctly
+        return $this->scanSchemaForTranslatableFields($class);
+    }
+
+    /**
+     * Scan block schema to find translatable fields
+     * Note: This is primarily for admin/saving. Frontend uses getTranslatableFields() for performance.
+     *
+     * @param string $blockClass
+     * @return array
+     */
+    protected function scanSchemaForTranslatableFields(string $blockClass): array
+    {
+        if (! class_exists($blockClass) || ! method_exists($blockClass, 'getSchema')) {
+            return [];
+        }
+
+        try {
+            $schema = $blockClass::getSchema();
+            $translatableFields = [];
+
+            $this->recursiveScanForTranslatable($schema, $translatableFields);
+
+            return $translatableFields;
+        } catch (\Exception $e) {
+            // If schema scanning fails, return empty array
+            return [];
+        }
+    }
+
+    /**
+     * Recursively scan schema components to find translatable fields
+     *
+     * @param array $components
+     * @param array &$translatableFields
+     * @return void
+     */
+    protected function recursiveScanForTranslatable(array $components, array &$translatableFields): void
+    {
+        foreach ($components as $component) {
+            if (! is_object($component)) {
+                continue;
+            }
+
+            // Try to get statePath property (for Form fields with ->translatable())
+            $name = null;
+
+            if (property_exists($component, 'statePath')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'statePath');
+                    $reflection->setAccessible(true);
+                    $name = $reflection->getValue($component);
+                } catch (\Exception $e) {
+                    // Continue
+                }
+            }
+
+            // Check if name matches translatable pattern: fieldname.locale (e.g. "headline.en")
+            if ($name && preg_match('/^(.+)\.([a-z]{2})(_[A-Z]{2})?$/', $name, $matches)) {
+                $baseFieldName = $matches[1];
+
+                if (! in_array($baseFieldName, $translatableFields)) {
+                    $translatableFields[] = $baseFieldName;
+                }
+            }
+
+            // Recursively scan child components
+            if (property_exists($component, 'childComponents')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'childComponents');
+                    $reflection->setAccessible(true);
+                    $childComponents = $reflection->getValue($component);
+
+                    if (is_array($childComponents)) {
+                        foreach ($childComponents as $children) {
+                            if (is_array($children)) {
+                                $this->recursiveScanForTranslatable($children, $translatableFields);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue
+                }
+            }
+        }
+    }
+
     public function hydrateBlock(?string $locale = null): mixed
     {
         $locale = $locale ?? app()->getLocale();
@@ -95,7 +198,8 @@ class AtelierBlock extends Model
         $instance = new $class;
 
         // Get translatable fields for this block
-        $translatableFields = $class::getTranslatableFields();
+        // Try to use schema scanning if available, fallback to getTranslatableFields()
+        $translatableFields = $this->getTranslatableFieldsForBlock($class);
 
         // Load all attributes
         $attributes = $this->attributes()->get();
