@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+@source '../views/**/*.blade.php';
+
+/* Alpine.js x-cloak - hide elements until Alpine initializes */
+[x-cloak] {
+    display: none !important;
+}

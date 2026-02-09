@@ -1,0 +1,28 @@
+<?php
+
+namespace BlackpigCreatif\Atelier\Concerns;
+
+use BlackpigCreatif\Atelier\Models\AtelierBlock;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+
+trait HasAtelierBlocks
+{
+    public function blocks(): MorphMany
+    {
+        return $this->morphMany(AtelierBlock::class, 'blockable')
+            ->ordered();
+    }
+
+    public function publishedBlocks(): MorphMany
+    {
+        return $this->blocks()->published();
+    }
+
+    public function renderBlocks(?string $locale = null): string
+    {
+        return $this->publishedBlocks()
+            ->get()
+            ->map(fn (AtelierBlock $block) => $block->render($locale)->render())
+            ->implode('');
+    }
+}
