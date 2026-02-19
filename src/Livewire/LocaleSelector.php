@@ -18,7 +18,7 @@ class LocaleSelector extends Component
 
     public function switchLocale(string $locale): void
     {
-        $availableLocales = config('atelier.locales', []);
+        $availableLocales = config('app.locales', []);
 
         if (! isset($availableLocales[$locale])) {
             return;
@@ -34,7 +34,7 @@ class LocaleSelector extends Component
     public function render()
     {
         return view('atelier::livewire.locale-selector', [
-            'availableLocales' => config('atelier.locales', ['en' => 'English']),
+            'availableLocales' => config('app.locales', ['en' => 'English']),
         ]);
     }
 }

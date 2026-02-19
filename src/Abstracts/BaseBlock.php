@@ -121,7 +121,7 @@ abstract class BaseBlock
     public function getTranslations(string $key): array
     {
         $translations = [];
-        $locales = array_keys(config('atelier.locales', ['en' => 'English']));
+        $locales = array_keys(config('app.locales', ['en' => 'English']));
 
         foreach ($locales as $locale) {
             $value = $this->get("{$key}.{$locale}");
@@ -162,7 +162,7 @@ abstract class BaseBlock
             return false;
         }
 
-        $availableLocales = array_keys(config('atelier.locales', ['en' => 'English']));
+        $availableLocales = array_keys(config('app.locales', ['en' => 'English']));
 
         // Check if all keys are valid locale codes
         foreach (array_keys($value) as $key) {
