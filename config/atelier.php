@@ -6,17 +6,10 @@ return [
     | Locales
     |--------------------------------------------------------------------------
     |
-    | Define the locales available for content translation in Atelier.
-    | The first locale in the array will be treated as the default.
+    | No Longer used in the config file, use the app.locales config instead.
     |
     */
-    'locales' => [
-        'en' => 'English',
-        'fr' => 'Français',
-        // 'es' => 'Español',
-        // 'de' => 'Deutsch',
-    ],
-    
+
     'default_locale' => 'en',
 
     /*

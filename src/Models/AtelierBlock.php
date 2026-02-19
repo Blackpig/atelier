@@ -280,7 +280,7 @@ class AtelierBlock extends Model
 
     public function clearCache(): void
     {
-        $locales = array_keys(config('atelier.locales', ['en' => 'English']));
+        $locales = array_keys(config('app.locales', ['en' => 'English']));
 
         foreach ($locales as $locale) {
             cache()->forget($this->getCacheKey($locale));

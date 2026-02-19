@@ -1086,7 +1086,7 @@ class BlockManager extends Field
             return false;
         }
 
-        $availableLocales = array_keys(config('atelier.locales', ['en' => 'English']));
+        $availableLocales = array_keys(config('app.locales', ['en' => 'English']));
 
         // Check if all keys are valid locale codes
         foreach (array_keys($value) as $key) {

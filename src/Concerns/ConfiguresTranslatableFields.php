@@ -17,7 +17,7 @@ trait ConfiguresTranslatableFields
             /** @var Field $this */
             $originalField = $this;
             $fieldName = $this->getName();
-            $availableLocales = config('atelier.locales', ['en' => 'English']);
+            $availableLocales = config('app.locales', ['en' => 'English']);
             $defaultLocale = config('atelier.default_locale', 'en');
 
             // Create a group that will contain locale-specific field instances
