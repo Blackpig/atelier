@@ -51,14 +51,22 @@ trait ConfiguresTranslatableFields
                 $localeFields[] = $fieldWrapper;
             }
 
-            // Return a Group containing all locale-specific field wrappers
-            // The global LocaleSelector will control which one is visible via Alpine
+            // Return a Group containing all locale-specific field wrappers.
+            // key($fieldName) preserves the original field name so that
+            // BlockFieldConfig::findFieldIndex() can locate this Group for
+            // insertBefore/insertAfter operations.
+            // extraAttributes uses a Closure so the session is read at render time,
+            // not at schema-definition/boot time.
             return Group::make($localeFields)
-                ->extraAttributes([
-                    'x-data' => "{ currentLocale: '".session('atelier.current_locale', $defaultLocale)."' }",
-                    'x-on:locale-changed.window' => 'currentLocale = $event.detail.locale',
-                ])
+                ->key($fieldName)
+                ->extraAttributes(function () use ($defaultLocale) {
+                    return [
+                        'x-data' => "{ currentLocale: '".session('atelier.current_locale', $defaultLocale)."' }",
+                        'x-on:locale-changed.window' => 'currentLocale = $event.detail.locale',
+                    ];
+                })
                 ->columnSpanFull()
+                ->columns(1)
                 ->gap(false);
         });
     }

@@ -21,7 +21,6 @@ composer require blackpig-creatif/atelier
 
 Atelier automatically pulls in its companion packages:
 - [Chambre Noir](https://github.com/blackpig-creatif/chambre-noir) -- responsive image processing
-- [Sceau](https://github.com/blackpig-creatif/sceau) -- SEO and Schema.org structured data
 
 Publish and run migrations:
 
