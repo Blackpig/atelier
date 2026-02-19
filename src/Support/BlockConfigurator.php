@@ -87,8 +87,8 @@ class BlockConfigurator
     }
 
     /**
-     * Remove one or more fields entirely from the block schema
-     * This is different from hide() - it completely removes fields from the schema
+     * Remove one or more fields entirely from the block schema.
+     * This is different from hide() - it completely removes fields from the schema.
      *
      * @param string ...$fieldNames
      * @return static
@@ -99,6 +99,23 @@ class BlockConfigurator
 
         $this->modifySchema(function ($schema) use ($fieldsToRemove) {
             return BlockFieldConfig::removeFields($schema, $fieldsToRemove);
+        });
+
+        return $this;
+    }
+
+    /**
+     * Remove one or more container sections by their heading label.
+     *
+     * @param string ...$headings
+     * @return static
+     */
+    public function removeSection(string ...$headings): static
+    {
+        $headingsToRemove = $headings;
+
+        $this->modifySchema(function ($schema) use ($headingsToRemove) {
+            return BlockFieldConfig::removeSections($schema, $headingsToRemove);
         });
 
         return $this;

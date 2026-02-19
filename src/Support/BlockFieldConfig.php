@@ -270,7 +270,7 @@ class BlockFieldConfig
     }
 
     /**
-     * Insert field(s) before a specific field
+     * Insert field(s) before a specific field, searching recursively through nested containers.
      *
      * @param array $schema
      * @param string $beforeFieldName
@@ -279,21 +279,14 @@ class BlockFieldConfig
      */
     public static function insertBefore(array $schema, string $beforeFieldName, array $fields): array
     {
-        $index = static::findFieldIndex($schema, $beforeFieldName);
+        $inserted = false;
+        static::insertNestedOnce($schema, $beforeFieldName, $fields, 'before', $inserted);
 
-        if ($index === null) {
-            return $schema;
-        }
-
-        return [
-            ...array_slice($schema, 0, $index),
-            ...$fields,
-            ...array_slice($schema, $index),
-        ];
+        return $schema;
     }
 
     /**
-     * Insert field(s) after a specific field
+     * Insert field(s) after a specific field, searching recursively through nested containers.
      *
      * @param array $schema
      * @param string $afterFieldName
@@ -302,17 +295,105 @@ class BlockFieldConfig
      */
     public static function insertAfter(array $schema, string $afterFieldName, array $fields): array
     {
-        $index = static::findFieldIndex($schema, $afterFieldName);
+        $inserted = false;
+        static::insertNestedOnce($schema, $afterFieldName, $fields, 'after', $inserted);
 
-        if ($index === null) {
+        return $schema;
+    }
+
+    /**
+     * Recursively search for a field and insert new fields before/after it exactly once.
+     * Returns the (possibly modified) array for the current level.
+     *
+     * @param array  $schema    Passed by reference so top-level insertions propagate back
+     * @param string $targetField
+     * @param array  $fields
+     * @param string $position  'before'|'after'
+     * @param bool   $inserted  Shared flag — set to true once the insertion is made
+     * @return array
+     */
+    protected static function insertNestedOnce(array &$schema, string $targetField, array $fields, string $position, bool &$inserted): array
+    {
+        if ($inserted) {
             return $schema;
         }
 
-        return [
-            ...array_slice($schema, 0, $index + 1),
-            ...$fields,
-            ...array_slice($schema, $index + 1),
-        ];
+        $index = static::findFieldIndex($schema, $targetField);
+
+        if ($index !== null) {
+            $offset = $position === 'before' ? $index : $index + 1;
+            $schema = [
+                ...array_slice($schema, 0, $offset),
+                ...$fields,
+                ...array_slice($schema, $offset),
+            ];
+            $inserted = true;
+
+            return $schema;
+        }
+
+        // Not at this level — recurse into Sections only.
+        // We deliberately skip Groups (used by the translatable macro and other layout
+        // utilities) to avoid matching cloned locale-variant fields inside them.
+        foreach ($schema as $component) {
+            if ($inserted) {
+                break;
+            }
+
+            if (! ($component instanceof \Filament\Schemas\Components\Section)) {
+                continue;
+            }
+
+            if (! property_exists($component, 'childComponents')) {
+                continue;
+            }
+
+            try {
+                $reflection = new \ReflectionProperty($component, 'childComponents');
+                $reflection->setAccessible(true);
+                $childComponents = $reflection->getValue($component);
+
+                if (! is_array($childComponents)) {
+                    continue;
+                }
+
+                foreach ($childComponents as $key => $children) {
+                    if ($inserted || ! is_array($children)) {
+                        continue;
+                    }
+
+                    static::insertNestedOnce($children, $targetField, $fields, $position, $inserted);
+
+                    if ($inserted) {
+                        $childComponents[$key] = $children;
+                        $reflection->setValue($component, $childComponents);
+                        break;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Continue if we can't access the property
+            }
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Remove container components (e.g. Sections) by their heading label.
+     *
+     * @param array $schema
+     * @param array $headings
+     * @return array
+     */
+    public static function removeSections(array $schema, array $headings): array
+    {
+        return array_values(array_filter($schema, function ($component) use ($headings) {
+            if (method_exists($component, 'getHeading') && in_array($component->getHeading(), $headings)) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     /**
@@ -343,7 +424,11 @@ class BlockFieldConfig
     }
 
     /**
-     * Find the index of a field by name
+     * Find the index of a component by field name within a flat array.
+     * Checks getName() for plain Fields and the raw $key property for keyed
+     * containers such as the translatable Group wrapper produced by ->translatable().
+     * We read $key directly rather than calling getKey() to avoid accessing
+     * $container before the component is mounted in a schema.
      *
      * @param array $schema
      * @param string $fieldName
@@ -355,8 +440,21 @@ class BlockFieldConfig
             if (method_exists($component, 'getName') && $component->getName() === $fieldName) {
                 return $index;
             }
+
+            if (property_exists($component, 'key')) {
+                try {
+                    $r = new \ReflectionProperty($component, 'key');
+                    $r->setAccessible(true);
+                    if ($r->getValue($component) === $fieldName) {
+                        return $index;
+                    }
+                } catch (\Exception $e) {
+                    // Continue
+                }
+            }
         }
 
         return null;
     }
+
 }
