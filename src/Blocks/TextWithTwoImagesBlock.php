@@ -115,7 +115,7 @@ class TextWithTwoImagesBlock extends BaseBlock
                 ])
                 ->collapsible(),
 
-            Section::make('Layout')
+            Section::make('Layout Options')
                 ->schema([
                     Select::make('layout')
                         ->label('Layout Style')
