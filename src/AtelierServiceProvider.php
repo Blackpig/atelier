@@ -5,6 +5,7 @@ namespace BlackpigCreatif\Atelier;
 use BlackpigCreatif\Atelier\Concerns\ConfiguresTranslatableFields;
 use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierBlockCommand;
 use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierCollectionCommand;
+use BlackpigCreatif\Atelier\Contracts\BlockSchemaDriverInterface;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
 use Illuminate\Support\Facades\Blade;
@@ -28,6 +29,7 @@ class AtelierServiceProvider extends PackageServiceProvider
                 '2024_12_17_000001_add_collection_name_to_atelier_block_attributes',
                 '2024_12_17_000002_add_collection_index_to_atelier_block_attributes',
             ])
+            ->runsMigrations()
             ->hasCommands([
                 MakeAtelierBlockCommand::class,
                 MakeAtelierCollectionCommand::class,
@@ -36,8 +38,8 @@ class AtelierServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        // Register global block field configurations
         $this->registerGlobalBlockConfigurations();
+        $this->registerSchemaDriver();
     }
 
     public function packageBooted(): void
@@ -80,11 +82,26 @@ class AtelierServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Register global block field configurations
-     * These apply to all resources unless overridden per-resource
+     * Register the schema driver singleton when configured.
+     * Uses class_exists so the package functions without any driver installed.
+     */
+    protected function registerSchemaDriver(): void
+    {
+        $driverClass = config('atelier.schema_driver');
+
+        if ($driverClass === null || ! class_exists($driverClass)) {
+            return;
+        }
+
+        $this->app->singleton(BlockSchemaDriverInterface::class, $driverClass);
+    }
+
+    /**
+     * Register global block field configurations.
+     * These apply to all resources unless overridden per-resource.
      *
      * Override this method in your application's service provider
-     * to register global block field configurations
+     * to register global block field configurations.
      *
      * Example use cases:
      * - Hide fields that aren't needed across all projects

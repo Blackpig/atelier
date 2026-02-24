@@ -11,14 +11,13 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
-
 use Illuminate\Contracts\View\View;
 
 class TextWithImageBlock extends BaseBlock
 {
-    use HasRetouchMedia;
     use HasCallToActions;
-    
+    use HasRetouchMedia;
+
     public static function getLabel(): string
     {
         return 'Text + Image';
@@ -83,12 +82,12 @@ class TextWithImageBlock extends BaseBlock
                 ])
                 ->collapsible(),
 
-                Section::make('Call to Action')
-                    ->schema([
-                        static::getCallToActionsField()
-                    ])
+            Section::make('Call to Action')
+                ->schema([
+                    static::getCallToActionsField(),
+                ])
 
-                    ->collapsible(),
+                ->collapsible(),
 
             Section::make('Layout')
                 ->schema([
@@ -126,5 +125,31 @@ class TextWithImageBlock extends BaseBlock
     public function render(): View
     {
         return view(static::getViewPath(), $this->getViewData());
+    }
+
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array{type: string, content: string|null, url: string|null}
+     */
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'text_with_image',
+            'content' => strip_tags($this->getTranslated('content') ?? ''),
+            'url' => $this->getMediaUrl('image', 'large'),
+        ];
+    }
+
+    public function getImageSizeClass(): string
+    {
+        return match ($this->get('image_width', '40')) {
+            '30' => 'md:w-[30%]',
+            '50' => 'md:w-[50%]',
+            default => 'md:w-[40%]',
+        };
     }
 }

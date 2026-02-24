@@ -3,7 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blackpig-creatif/atelier.svg?style=flat-square)](https://packagist.org/packages/blackpig-creatif/atelier)
 [![Total Downloads](https://img.shields.io/packagist/dt/blackpig-creatif/atelier.svg?style=flat-square)](https://packagist.org/packages/blackpig-creatif/atelier)
 
-A polymorphic content block builder for FilamentPHP v4 with first-class translation support, EAV attribute storage, and Schema.org structured data generation.
+A polymorphic content block builder for FilamentPHP v5 with first-class translation support, EAV attribute storage, and Schema.org structured data generation.
 
 Atelier stores block data as polymorphic EAV (Entity-Attribute-Value) rows, keeping your application schema lean while supporting arbitrary block structures. Translatable fields are stored per-locale, and the schema is scanned at save time to determine translatability automatically.
 
@@ -11,7 +11,7 @@ Atelier stores block data as polymorphic EAV (Entity-Attribute-Value) rows, keep
 
 - PHP 8.2+
 - Laravel 11+
-- FilamentPHP 4.0+
+- FilamentPHP 5.0+
 
 ## Installation
 
@@ -121,16 +121,17 @@ public static function form(Form $form): Form
 
 ## Built-in Blocks
 
-| Block | Description |
-|-------|-------------|
-| **HeroBlock** | Full-width hero with background image, headline, CTAs |
-| **TextBlock** | Rich text with optional title, subtitle, column layout |
-| **TextWithImageBlock** | Text + single image, configurable position |
-| **TextWithTwoImagesBlock** | Rich text + two images, multiple layout modes |
-| **ImageBlock** | Single image with caption, aspect ratio, lightbox |
-| **VideoBlock** | YouTube/Vimeo/direct URL embed with auto-detection |
-| **GalleryBlock** | Grid gallery with configurable columns and lightbox |
-| **CarouselBlock** | Image carousel with navigation and autoplay |
+| Block | Description | Schema contribution |
+|-------|-------------|---------------------|
+| **HeroBlock** | Full-width hero with background image, headline, CTAs | None |
+| **TextBlock** | Rich text with optional title, subtitle, column layout | Article body text |
+| **TextWithImageBlock** | Text + single image, configurable position | Article body text + image URL |
+| **TextWithTwoImagesBlock** | Rich text + two images, multiple layout modes | Article body text + image URLs |
+| **ImageBlock** | Single image with caption, aspect ratio, lightbox | None |
+| **VideoBlock** | YouTube/Vimeo/direct URL embed with auto-detection | VideoObject schema |
+| **GalleryBlock** | Grid gallery with configurable columns and lightbox | Image URLs for Article |
+| **CarouselBlock** | Image carousel with navigation and autoplay | Image URLs for Article |
+| **FaqsBlock** | Accordion FAQ list | FAQPage schema |
 
 ---
 
@@ -144,7 +145,7 @@ Collections group blocks into reusable sets.
 |-----------|--------|
 | `BasicBlocks` | Hero, Text, TextWithImage |
 | `MediaBlocks` | Image, Video, Gallery, Carousel |
-| `AllBlocks` | All eight built-in blocks |
+| `AllBlocks` | All built-in blocks |
 
 ### Usage
 
@@ -606,35 +607,56 @@ $page->getImageFromBlock('image', 'medium', ImageBlock::class);
 
 ## SEO Schema Generation
 
-Atelier integrates with [Sceau](https://github.com/blackpig-creatif/sceau) to generate Schema.org JSON-LD from blocks.
+Atelier exposes three PHP contracts that blocks implement to contribute to Schema.org output. The contracts are deliberately package-agnostic — Atelier has no dependency on Sceau or any other SEO library.
+
+See [docs/schema.md](docs/schema.md) for the full reference.
+
+### Three schema contracts
+
+`BaseBlock` implements all three contracts with no-op defaults. Override only what your block needs.
+
+**`HasCompositeSchema`** — contributes content or media URLs to a composite schema (e.g. Article) assembled from multiple blocks:
 
 ```php
-use BlackpigCreatif\Sceau\Services\PageSchemaBuilder;
+public function contributesToComposite(): bool { return true; }
 
-public function show(Page $page)
+public function getCompositeContribution(): array
 {
-    PageSchemaBuilder::build($page);
-    return view('pages.show', ['page' => $page]);
+    return [
+        'type'    => 'text',
+        'content' => strip_tags($this->getTranslated('content') ?? ''),
+    ];
 }
 ```
 
-Blocks contribute via `InteractsWithSchema` (inherited from `BaseBlock`):
+**`HasSchemaContribution`** — declares a typed schema that the active driver converts to a structured data array:
 
-- **Composite contribution** (e.g. TextBlock content feeds into an Article schema):
-  ```php
-  public function contributesToComposite(): bool { return true; }
-  public function getCompositeContribution(): array {
-      return ['type' => 'text', 'content' => strip_tags($this->get('content'))];
-  }
-  ```
+```php
+use BlackpigCreatif\Sceau\Enums\SchemaType;
 
-- **Standalone schema** (e.g. VideoBlock generates a VideoObject):
-  ```php
-  public function hasStandaloneSchema(): bool { return true; }
-  public function toStandaloneSchema(): ?array {
-      return ['@context' => 'https://schema.org', '@type' => 'VideoObject', ...];
-  }
-  ```
+public function getSchemaType(): ?SchemaType
+{
+    return ! empty($this->get('faqs')) ? SchemaType::FAQPage : null;
+}
+
+public function getSchemaData(): array
+{
+    return ['faqs' => $this->get('faqs', [])];
+}
+```
+
+**`HasStandaloneSchema`** — legacy escape hatch for blocks that build the full schema array themselves. Prefer the driver pattern for new blocks.
+
+### Wiring a driver
+
+The driver is resolved from the container via `BlockSchemaDriverInterface`. Configure Sceau's driver in your app config:
+
+```php
+// config/atelier.php
+'schema_driver' => \BlackpigCreatif\Sceau\Schema\Drivers\SceauBlockSchemaDriver::class,
+```
+
+When using Sceau, schema generation is fully automatic — the `<x-sceau::head>` component calls `PageSchemaBuilder::build()` for models that carry `HasAtelierBlocks`.
 
 ---
 
@@ -655,11 +677,13 @@ return [
         // Default blocks when ->blocks() is called without arguments
     ],
 
+    'schema_driver' => null, // Set to a BlockSchemaDriverInterface class to enable schema generation
+
     'features' => [
-        'backgrounds' => ['enabled' => true, 'options' => [...]],
-        'spacing'     => ['enabled' => true, 'options' => [...]],
-        'width'       => ['enabled' => true, 'options' => [...]],
-        'dividers'    => ['enabled' => true, 'options' => [...]],
+        'backgrounds'   => ['enabled' => true, 'options' => [...]],
+        'spacing'       => ['enabled' => true, 'options' => [...]],
+        'width'         => ['enabled' => true, 'options' => [...]],
+        'dividers'      => ['enabled' => true, 'options' => [...]],
         'button_styles' => ['enabled' => true, 'options' => [...]],
     ],
 
@@ -690,6 +714,7 @@ At hydration time, the `AtelierBlock` model reconstructs the block instance, fil
 
 - [Block Configuration](docs/block-configuration.md) -- full field config and schema modification reference
 - [Block Templates](docs/block-templates.md) -- template structure, helper methods, best practices
+- [Schema Generation](docs/schema.md) -- schema contracts, built-in contributions, custom block schemas
 
 ---
 

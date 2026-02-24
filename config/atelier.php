@@ -34,7 +34,7 @@ return [
     |
     */
     'table_prefix' => 'atelier_',
-    
+
     /*
     |--------------------------------------------------------------------------
     | Block Registration
@@ -46,7 +46,7 @@ return [
     |
     */
     'blocks' => [
-       /*  \BlackpigCreatif\Atelier\Blocks\HeroBlock::class,
+        /*  \BlackpigCreatif\Atelier\Blocks\HeroBlock::class,
         \BlackpigCreatif\Atelier\Blocks\TextBlock::class,
         \BlackpigCreatif\Atelier\Blocks\ImageBlock::class,
         \BlackpigCreatif\Atelier\Blocks\TextWithImageBlock::class,
@@ -57,7 +57,7 @@ return [
         // Add custom blocks here:
         // \App\Blocks\CustomBlock::class,
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Display Features
@@ -86,31 +86,31 @@ return [
                 'white' => [
                     'label' => 'White',
                     'class' => 'bg-white',
-                    'color' => '#FFFFFF'
+                    'color' => '#FFFFFF',
                 ],
                 'gray-50' => [
                     'label' => 'Light Gray',
                     'class' => 'bg-gray-50',
-                    'color' => '#F9FAFB'
+                    'color' => '#F9FAFB',
                 ],
                 'gray-100' => [
                     'label' => 'Gray',
                     'class' => 'bg-gray-100',
-                    'color' => '#F3F4F6'
+                    'color' => '#F3F4F6',
                 ],
                 'primary' => [
                     'label' => 'Primary',
                     'class' => 'bg-primary-500 text-white',
-                    'color' => '#6366F1'
+                    'color' => '#6366F1',
                 ],
                 'secondary' => [
                     'label' => 'Secondary',
                     'class' => 'bg-secondary-500 text-white',
-                    'color' => '#EC4899'
+                    'color' => '#EC4899',
                 ],
             ],
         ],
-        
+
         'spacing' => [
             'enabled' => true,
             'options' => [
@@ -122,7 +122,7 @@ return [
                 'xl' => ['label' => 'Extra Large', 'value' => 32],
             ],
         ],
-        
+
         'width' => [
             'enabled' => true,
             'options' => [
@@ -164,7 +164,7 @@ return [
             ],
         ],
     ],
-     
+
     /*
     |--------------------------------------------------------------------------
     | Caching
@@ -178,4 +178,18 @@ return [
         'ttl' => 3600, // 1 hour
         'prefix' => 'atelier_block_',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Schema Driver
+    |--------------------------------------------------------------------------
+    |
+    | Set the fully-qualified class name of a class implementing
+    | BlockSchemaDriverInterface to enable schema.org structured data
+    | generation for blocks. Set to null to disable entirely.
+    |
+    | Example: \BlackpigCreatif\Sceau\Schema\Drivers\SceauBlockSchemaDriver::class
+    |
+    */
+    'schema_driver' => null,
 ];

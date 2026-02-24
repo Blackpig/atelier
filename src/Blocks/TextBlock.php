@@ -42,7 +42,7 @@ class TextBlock extends BaseBlock
                         ->maxLength(255)
                         ->placeholder('Optional section title')
                         ->translatable(),
-                    
+
                     TextInput::make('subtitle')
                         ->label('Subtitle')
                         ->maxLength(255)
@@ -68,7 +68,7 @@ class TextBlock extends BaseBlock
 
             Section::make('Call to Action')
                 ->schema([
-                    static::getCallToActionsField()
+                    static::getCallToActionsField(),
                 ])
                 ->collapsible(),
 
@@ -140,7 +140,7 @@ class TextBlock extends BaseBlock
     {
         return [
             'type' => 'text',
-            'content' => strip_tags($this->get('content') ?? ''),
+            'content' => strip_tags($this->getTranslated('content') ?? ''),
         ];
     }
 }
