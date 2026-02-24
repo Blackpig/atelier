@@ -148,14 +148,11 @@ class ImageBlock extends BaseBlock
      */
     public function getCompositeContribution(): array
     {
-        $imageUuid = $this->get('image');
+        $url = $this->getMediaUrl('image', 'large');
 
-        if (! $imageUuid) {
+        if (! $url) {
             return ['type' => 'image', 'url' => null];
         }
-
-        // Use the large conversion for schema markup
-        $url = $this->resolveRetouchMediaUrl($imageUuid, 'large');
 
         return [
             'type' => 'image',
