@@ -12,10 +12,12 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Illuminate\Contracts\View\View;
+
 class TextWithTwoImagesBlock extends BaseBlock
 {
-    use HasRetouchMedia;
     use HasCallToActions;
+    use HasRetouchMedia;
+
     public static function getLabel(): string
     {
         return 'Text with Two Images';
@@ -111,7 +113,7 @@ class TextWithTwoImagesBlock extends BaseBlock
 
             Section::make('Call to Action')
                 ->schema([
-                    static::getCallToActionsField()
+                    static::getCallToActionsField(),
                 ])
                 ->collapsible(),
 
@@ -180,6 +182,26 @@ class TextWithTwoImagesBlock extends BaseBlock
             'large' => 'md:w-[50%]',
             default => 'md:w-[40%]',
         };
+    }
+
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array{type: string, content: string|null, urls: list<string>}
+     */
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'text_with_images',
+            'content' => strip_tags($this->getTranslated('content') ?? ''),
+            'urls' => array_values(array_filter([
+                $this->getMediaUrl('image_1', 'large'),
+                $this->getMediaUrl('image_2', 'large'),
+            ])),
+        ];
     }
 
     public function getImage1(): ?string

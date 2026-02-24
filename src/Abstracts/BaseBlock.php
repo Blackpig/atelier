@@ -3,16 +3,18 @@
 namespace BlackpigCreatif\Atelier\Abstracts;
 
 use BlackpigCreatif\Atelier\Concerns\HasCommonOptions;
-use BlackpigCreatif\Sceau\Concerns\InteractsWithSchema;
+use BlackpigCreatif\Atelier\Contracts\HasCompositeSchema;
+use BlackpigCreatif\Atelier\Contracts\HasSchemaContribution;
+use BlackpigCreatif\Atelier\Contracts\HasStandaloneSchema;
 use Filament\Support\Enums\IconSize;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 
-abstract class BaseBlock
+abstract class BaseBlock implements HasCompositeSchema, HasSchemaContribution, HasStandaloneSchema
 {
-    use HasCommonOptions, InteractsWithSchema;
+    use HasCommonOptions;
 
     protected array $data = [];
 
@@ -151,6 +153,43 @@ abstract class BaseBlock
     {
         // Override for custom validation
         return true;
+    }
+
+    // HasCompositeSchema defaults — override in blocks that contribute to Article schemas
+
+    public function contributesToComposite(): bool
+    {
+        return false;
+    }
+
+    public function getCompositeContribution(): ?array
+    {
+        return null;
+    }
+
+    // HasStandaloneSchema defaults — override in blocks that hand-craft their own schema
+
+    public function hasStandaloneSchema(): bool
+    {
+        return false;
+    }
+
+    public function toStandaloneSchema(): ?array
+    {
+        return null;
+    }
+
+    // HasSchemaContribution defaults — override in blocks that use the driver pattern
+
+    public function getSchemaType(): ?\BackedEnum
+    {
+        return null;
+    }
+
+    /** @return array<string, mixed> */
+    public function getSchemaData(): array
+    {
+        return [];
     }
 
     /**

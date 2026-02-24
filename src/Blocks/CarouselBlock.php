@@ -119,4 +119,20 @@ class CarouselBlock extends BaseBlock
     {
         return view(static::getViewPath(), $this->getViewData());
     }
+
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array{type: string, urls: list<string>}
+     */
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'carousel',
+            'urls' => $this->getMediaUrls('images', 'large'),
+        ];
+    }
 }

@@ -3,6 +3,7 @@
 namespace BlackpigCreatif\Atelier\Blocks;
 
 use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
+use BlackpigCreatif\Sceau\Enums\SchemaType;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -13,8 +14,6 @@ use Illuminate\Contracts\View\View;
 
 class VideoBlock extends BaseBlock
 {
-    
-
     public static function getLabel(): string
     {
         return 'Video';
@@ -121,58 +120,36 @@ class VideoBlock extends BaseBlock
         return view(static::getViewPath(), $this->getViewData());
     }
 
-    /**
-     * Video blocks generate their own standalone VideoObject schema.
-     */
-    public function hasStandaloneSchema(): bool
+    public function getSchemaType(): ?SchemaType
     {
-        return ! empty($this->get('video_url'));
+        return ! empty($this->get('video_url')) ? SchemaType::VideoObject : null;
     }
 
     /**
-     * Generate VideoObject schema.
+     * @return array{content_url: string, embed_url: string|null, name: string|null, description: string|null}
      */
-    public function toStandaloneSchema(): ?array
+    public function getSchemaData(): array
     {
-        $videoUrl = $this->get('video_url');
+        $videoUrl = $this->get('video_url', '');
 
-        if (! $videoUrl) {
-            return null;
-        }
-
-        $schema = [
-            '@context' => 'https://schema.org',
-            '@type' => 'VideoObject',
-            'contentUrl' => $videoUrl,
+        return [
+            'content_url' => $videoUrl,
+            'embed_url' => $this->getEmbedUrl($videoUrl),
+            'name' => $this->getTranslated('title'),
+            'description' => $this->getTranslated('description'),
         ];
-
-        if ($title = $this->get('title')) {
-            $schema['name'] = $title;
-        }
-
-        if ($description = $this->get('description')) {
-            $schema['description'] = $description;
-        }
-
-        // Try to extract embed URL for common platforms
-        if ($embedUrl = $this->getEmbedUrl($videoUrl)) {
-            $schema['embedUrl'] = $embedUrl;
-        }
-
-        return $schema;
     }
 
     /**
-     * Extract embed URL from video URL.
+     * Extract platform embed URL from a raw video URL.
+     * Supports YouTube and Vimeo; returns null for direct/unknown URLs.
      */
     protected function getEmbedUrl(string $url): ?string
     {
-        // YouTube
         if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\?]+)/', $url, $matches)) {
             return 'https://www.youtube.com/embed/'.$matches[1];
         }
 
-        // Vimeo
         if (preg_match('/vimeo\.com\/(\d+)/', $url, $matches)) {
             return 'https://player.vimeo.com/video/'.$matches[1];
         }

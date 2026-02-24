@@ -117,4 +117,20 @@ class GalleryBlock extends BaseBlock
     {
         return view(static::getViewPath(), $this->getViewData());
     }
+
+    public function contributesToComposite(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array{type: string, urls: list<string>}
+     */
+    public function getCompositeContribution(): array
+    {
+        return [
+            'type' => 'gallery',
+            'urls' => $this->getMediaUrls('images', 'large'),
+        ];
+    }
 }
