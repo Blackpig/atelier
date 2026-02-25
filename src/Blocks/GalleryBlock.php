@@ -6,6 +6,7 @@ use BlackpigCreatif\Atelier\Abstracts\BaseBlock;
 use BlackpigCreatif\Atelier\Conversions\BlockGalleryConversion;
 use BlackpigCreatif\ChambreNoir\Concerns\HasRetouchMedia;
 use BlackpigCreatif\ChambreNoir\Forms\Components\RetouchMediaUpload;
+use BlackpigCreatif\ChambreNoir\Services\ConversionManager;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -57,9 +58,9 @@ class GalleryBlock extends BaseBlock
                         ->visibility('public')
                         ->acceptedFileTypes(['image/*'])
                         ->required()
-                        ->minFiles(3)
+                        ->minFiles(1)
                         ->maxFiles(50)
-                        ->helperText('Upload 3-50 images. Each image auto-generates thumb, medium, and large sizes.')
+                        ->helperText('Upload 1–50 images. Each image auto-generates thumb, medium, and large sizes.')
                         ->columnSpanFull(),
                 ])
                 ->collapsible(),
@@ -86,6 +87,17 @@ class GalleryBlock extends BaseBlock
                                 'gap-8' => 'Extra Large',
                             ])
                             ->default('gap-4')
+                            ->native(false),
+
+                        Select::make('per_page')
+                            ->label('Images per Page')
+                            ->options([
+                                '5' => '5 per page',
+                                '10' => '10 per page',
+                                '15' => '15 per page',
+                                '20' => '20 per page',
+                            ])
+                            ->default('5')
                             ->native(false),
                     ]),
 
@@ -116,6 +128,79 @@ class GalleryBlock extends BaseBlock
     public function render(): View
     {
         return view(static::getViewPath(), $this->getViewData());
+    }
+
+    public function getViewData(): array
+    {
+        return array_merge(
+            parent::getViewData(),
+            ['imagesData' => $this->getImagesData()]
+        );
+    }
+
+    /**
+     * Returns all available conversion URLs for each image, plus two virtual keys:
+     *   - `display`  → the URL used for grid thumbnails (prefers medium/small/thumb)
+     *   - `lightbox` → the URL used for the full-screen lightbox  (prefers large)
+     *
+     * Using named virtual keys means the template is decoupled from whatever
+     * conversion preset is configured (BlockGalleryConversion, GalleryConversion, etc.).
+     *
+     * @return list<array<string, string>>
+     */
+    public function getImagesData(): array
+    {
+        $data = $this->get('images');
+
+        if (! $data || ! is_array($data)) {
+            return [];
+        }
+
+        // Handle a single image stored in ChambreNoir JSON format
+        if (isset($data['original'])) {
+            $data = [$data];
+        }
+
+        $manager = app(ConversionManager::class);
+        $result = [];
+
+        foreach ($data as $item) {
+            if (! is_array($item) || ! isset($item['original'])) {
+                continue;
+            }
+
+            $conversionKeys = array_keys($item['conversions'] ?? []);
+
+            if (empty($conversionKeys)) {
+                continue;
+            }
+
+            // Resolve all stored conversion URLs
+            $urls = [];
+            foreach ($conversionKeys as $name) {
+                $url = $manager->getUrl($item, $name, 'public');
+                if ($url) {
+                    $urls[$name] = $url;
+                }
+            }
+
+            if (empty($urls)) {
+                continue;
+            }
+
+            // display: prefer medium > small > thumb > first available
+            $displayUrl = $urls['medium'] ?? $urls['small'] ?? $urls['thumb'] ?? $urls[array_key_first($urls)];
+
+            // lightbox: prefer large > last available
+            $lightboxUrl = $urls['large'] ?? $urls[array_key_last($urls)];
+
+            $result[] = array_merge($urls, [
+                'display' => $displayUrl,
+                'lightbox' => $lightboxUrl,
+            ]);
+        }
+
+        return $result;
     }
 
     public function contributesToComposite(): bool
