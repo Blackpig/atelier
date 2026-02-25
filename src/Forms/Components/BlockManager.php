@@ -341,6 +341,59 @@ class BlockManager extends Field
     }
 
     /**
+     * Control whether users can edit existing blocks.
+     *
+     * Accepts a boolean or a Closure for dynamic authorization.
+     * When false, the edit (pencil) icon is hidden.
+     */
+    public function canEditBlock(bool|Closure $condition = true): static
+    {
+        $this->isEditable = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Control whether users can create new blocks.
+     *
+     * Accepts a boolean or a Closure for dynamic authorization.
+     * The Closure receives the current record and Livewire component via Filament's
+     * evaluate context, e.g. fn ($record) => $record->isOwnedBy(auth()->user())
+     */
+    public function canCreateBlock(bool|Closure $condition = true): static
+    {
+        $this->isAddable = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Control whether users can reorder blocks via drag-and-drop.
+     *
+     * Accepts a boolean or a Closure for dynamic authorization.
+     * When false, the drag handle is hidden and sorting is disabled.
+     */
+    public function canReorderBlocks(bool|Closure $condition = true): static
+    {
+        $this->isReorderable = $condition;
+
+        return $this;
+    }
+
+    /**
+     * Control whether users can delete blocks.
+     *
+     * Accepts a boolean or a Closure for dynamic authorization.
+     * When false, the delete icon is hidden including during hover state.
+     */
+    public function canDeleteBlock(bool|Closure $condition = true): static
+    {
+        $this->isDeletable = $condition;
+
+        return $this;
+    }
+
+    /**
      * Set add button label
      */
     public function addButtonLabel(?string $label): static
