@@ -337,7 +337,7 @@ class QuoteBlock extends BaseBlock
     public static function getSchema(): array
     {
         return [
-            static::getPublishedField(),
+            ...static::getHeaderFields(),
 
             Section::make('Content')
                 ->schema([
@@ -367,7 +367,7 @@ Key points:
 - Extend `BaseBlock` and implement `getLabel()`, `getSchema()`, `render()`
 - Use `HasCommonOptions` for background, spacing, width, and divider controls
 - Call `->translatable()` as the **last** method in a field chain
-- Call `static::getPublishedField()` at the top of your schema for the publish toggle
+- Call `...static::getHeaderFields()` at the top of your schema (Published toggle + Fragment ID when scroll navigation is enabled)
 - Call `...static::getCommonOptionsSchema()` at the end for display options
 
 ### Block template
@@ -545,6 +545,54 @@ In templates, use `$block->getWrapperClasses()` on the outer `<section>` (backgr
 
 ---
 
+## Scroll Navigation
+
+Atelier includes optional in-page scroll navigation, designed for single-page sites with a fixed header nav that links to named sections.
+
+Enable it in `config/atelier.php`:
+
+```php
+'features' => [
+    'scroll_navigation' => [
+        'enabled' => true,
+        'offset'  => 80, // fixed nav height in pixels
+    ],
+],
+```
+
+When enabled, a **Fragment ID** field appears alongside the Published toggle at the top of every block's edit form. Editors enter a short identifier (e.g. `about`) and the rendered `<section>` receives `id="about"`.
+
+### JS helper
+
+The `scrollToEl()` helper is injected once per page via `@push('scripts')` when any block is rendered. Add `@stack('scripts')` before `</body>` in your layout if it is not already there.
+
+```javascript
+window.scrollToEl = (selector) => {
+    const el = document.getElementById(selector)
+    if (!el) return
+    const y = el.getBoundingClientRect().top + window.scrollY - 80 // offset from config
+    window.scrollTo({ top: y, behavior: 'smooth' })
+}
+```
+
+### Wiring up nav links
+
+```html
+<!-- Plain HTML -->
+<a href="#about" onclick="event.preventDefault(); scrollToEl('about')">About</a>
+
+<!-- Alpine.js -->
+<button @click="scrollToEl('about')">About</button>
+```
+
+### Template method
+
+```php
+$block->getFragmentId(): ?string   // returns the stored value, or null if unset
+```
+
+---
+
 ## Media Handling
 
 Atelier integrates with [Chambre Noir](https://github.com/blackpig-creatif/chambre-noir) for responsive images. Use `RetouchMediaUpload` in your schema and the `HasRetouchMedia` trait on your block:
@@ -680,11 +728,12 @@ return [
     'schema_driver' => null, // Set to a BlockSchemaDriverInterface class to enable schema generation
 
     'features' => [
-        'backgrounds'   => ['enabled' => true, 'options' => [...]],
-        'spacing'       => ['enabled' => true, 'options' => [...]],
-        'width'         => ['enabled' => true, 'options' => [...]],
-        'dividers'      => ['enabled' => true, 'options' => [...]],
-        'button_styles' => ['enabled' => true, 'options' => [...]],
+        'backgrounds'       => ['enabled' => true,  'options' => [...]],
+        'spacing'           => ['enabled' => true,  'options' => [...]],
+        'width'             => ['enabled' => true,  'options' => [...]],
+        'dividers'          => ['enabled' => true,  'options' => [...]],
+        'button_styles'     => ['enabled' => true,  'options' => [...]],
+        'scroll_navigation' => ['enabled' => false, 'offset'  => 80],
     ],
 
     'cache' => [
@@ -713,7 +762,7 @@ At hydration time, the `AtelierBlock` model reconstructs the block instance, fil
 ## Documentation
 
 - [Block Configuration](docs/block-configuration.md) -- full field config and schema modification reference
-- [Block Templates](docs/block-templates.md) -- template structure, helper methods, best practices
+- [Block Templates](docs/block-templates.md) -- template structure, helper methods, scroll navigation, best practices
 - [Schema Generation](docs/schema.md) -- schema contracts, built-in contributions, custom block schemas
 
 ---

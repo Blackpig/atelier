@@ -133,6 +133,8 @@ class {{className}} extends BaseBlock
     public static function getSchema(): array
     {
         return [
+            ...static::getHeaderFields(),
+
             Section::make('Content')
                 ->schema([
                     TextInput::make('title')
@@ -204,6 +206,7 @@ PHP;
      *
      * Helper Methods:
      * @method string $block->getTranslated(string $field) - Get translated value for field
+     * @method string $block->getFragmentId() - Get fragment ID for scroll navigation, or null
      * @method string $block->getWrapperClasses() - Get wrapper classes (background, spacing)
      * @method string $block->getContainerClasses() - Get container classes (width)
      * @method string $block::getBlockIdentifier() - Get block identifier
@@ -212,9 +215,11 @@ PHP;
      */
 
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
+    $fragmentId = $block->getFragmentId();
 @endphp
 
 <section class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }}"
+         @if($fragmentId) id="{{ $fragmentId }}" @endif
          data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
 
@@ -244,6 +249,21 @@ PHP;
         />
     @endif
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce
 
 BLADE;
     }
