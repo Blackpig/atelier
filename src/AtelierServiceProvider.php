@@ -29,7 +29,6 @@ class AtelierServiceProvider extends PackageServiceProvider
                 '2024_12_17_000001_add_collection_name_to_atelier_block_attributes',
                 '2024_12_17_000002_add_collection_index_to_atelier_block_attributes',
             ])
-            ->runsMigrations()
             ->hasCommands([
                 MakeAtelierBlockCommand::class,
                 MakeAtelierCollectionCommand::class,
