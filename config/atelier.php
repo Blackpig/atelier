@@ -163,6 +163,24 @@ return [
                 ],
             ],
         ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Scroll Navigation
+        |--------------------------------------------------------------------------
+        |
+        | When enabled, a Fragment ID field appears on every block form, allowing
+        | editors to assign an anchor (e.g. "about" → <section id="about">).
+        | The scrollToEl() JS helper is injected once per page via @push('scripts').
+        |
+        | offset: pixels subtracted from the scroll position to account for a
+        |         fixed navigation bar. Adjust to match your nav height.
+        |
+        */
+        'scroll_navigation' => [
+            'enabled' => false,
+            'offset' => 80,
+        ],
     ],
 
     /*

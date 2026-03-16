@@ -29,7 +29,9 @@
      */
 @endphp
 
-<section class="atelier-text-with-two-images {{ $block->getWrapperClasses() }}" 
+@php($fragmentId = $block->getFragmentId())
+<section class="atelier-text-with-two-images {{ $block->getWrapperClasses() }}"
+         @if($fragmentId) id="{{ $fragmentId }}" @endif
          data-block-type="text-with-two-images"
          data-block-id="{{ $block->blockId ?? '' }}">
     <div class="{{ $block->getContainerClasses() }}">
@@ -366,3 +368,18 @@
         
     </div>
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce

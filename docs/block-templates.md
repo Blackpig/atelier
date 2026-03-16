@@ -25,9 +25,11 @@ Every template receives a `$block` instance and all field data as view variables
 ```blade
 @php
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
+    $fragmentId = $block->getFragmentId();
 @endphp
 
 <section class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }}"
+         @if($fragmentId) id="{{ $fragmentId }}" @endif
          data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
 
@@ -42,7 +44,24 @@ Every template receives a `$block` instance and all field data as view variables
         />
     @endif
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce
 ```
+
+The `@once('atelier-scroll-to')` block uses a named key so the function is injected only once per page regardless of how many blocks are rendered.
 
 ### Wrapper vs Container
 
@@ -104,6 +123,7 @@ $block->isExternalUrl($cta['url'])             // bool
 $block->blockId                  // int -- database ID
 $block::getBlockIdentifier()     // string -- e.g. 'hero-block'
 $block::getLabel()               // string -- e.g. 'Hero Section'
+$block->getFragmentId()          // ?string -- e.g. 'about', or null if unset
 ```
 
 ---
@@ -197,9 +217,11 @@ Or render manually:
 ```blade
 @php
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
+    $fragmentId = $block->getFragmentId();
 @endphp
 
 <section class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }}"
+         @if($fragmentId) id="{{ $fragmentId }}" @endif
          data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
 
@@ -239,7 +261,74 @@ Or render manually:
         />
     @endif
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce
 ```
+
+---
+
+## Scroll Navigation
+
+When `features.scroll_navigation.enabled` is `true` in your config, each block's edit form shows a **Fragment ID** field (alongside the Published toggle). Setting it to `about` causes the rendered section to receive `id="about"`, enabling in-page anchor navigation.
+
+### Requirements
+
+Add `@stack('scripts')` before `</body>` in your layout if it is not already present:
+
+```blade
+    @stack('scripts')
+</body>
+```
+
+The `scrollToEl()` function is then pushed exactly once per page, regardless of how many blocks appear.
+
+### Offset
+
+The `offset` value (default `80`) is subtracted from the scroll position to account for a fixed navigation bar. Adjust it to match your nav height:
+
+```php
+// config/atelier.php
+'scroll_navigation' => [
+    'enabled' => true,
+    'offset'  => 64, // your nav height in pixels
+],
+```
+
+### Custom blocks
+
+If you are building a custom block template, include the standard `@once` block after your `</section>`:
+
+```blade
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce
+```
+
+The named `@once` key ensures the script is output only once even if multiple block types each include this snippet.
 
 ---
 

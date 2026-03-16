@@ -36,7 +36,7 @@ class GalleryBlock extends BaseBlock
     public static function getSchema(): array
     {
         return [
-            static::getPublishedField(),
+            ...static::getHeaderFields(),
 
             Section::make('Content')
                 ->schema([

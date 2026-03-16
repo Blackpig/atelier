@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier\Concerns;
 
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 
@@ -19,6 +20,45 @@ trait HasCommonOptions
             ->helperText('Unpublished blocks will not appear on the frontend')
             ->default(true)
             ->inline(false);
+    }
+
+    /**
+     * Get the Fragment ID field for scroll-to navigation.
+     */
+    public static function getFragmentIdField(): TextInput
+    {
+        return TextInput::make('fragment_id')
+            ->label('Fragment ID')
+            ->helperText('Assigns an anchor to this section (e.g. "about" → #about). Used for scroll navigation.')
+            ->prefix('#')
+            ->maxLength(100)
+            ->nullable();
+    }
+
+    /**
+     * Returns the top-level header fields: Published toggle, and Fragment ID
+     * when scroll navigation is enabled. Replaces a bare getPublishedField()
+     * call in each block's getSchema().
+     */
+    public static function getHeaderFields(): array
+    {
+        $fields = [static::getPublishedField()];
+
+        if (config('atelier.features.scroll_navigation.enabled')) {
+            $fields[] = static::getFragmentIdField();
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Get the fragment ID value for this block instance.
+     */
+    public function getFragmentId(): ?string
+    {
+        $value = $this->get('fragment_id');
+
+        return ($value !== null && $value !== '') ? (string) $value : null;
     }
 
     /**

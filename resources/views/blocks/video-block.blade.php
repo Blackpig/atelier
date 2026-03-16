@@ -23,6 +23,7 @@
      */
 
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
+    $fragmentId = $block->getFragmentId();
 
     // Convert video URL to embed URL
     $embedUrl = $video_url ?? '';
@@ -56,6 +57,7 @@
 @endphp
 
 <section class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }}"
+         @if($fragmentId) id="{{ $fragmentId }}" @endif
          data-block-type="{{ $block::getBlockIdentifier() }}"
          data-block-id="{{ $block->blockId ?? '' }}">
 
@@ -115,3 +117,18 @@
         />
     @endif
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce

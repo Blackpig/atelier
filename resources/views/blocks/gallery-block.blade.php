@@ -15,6 +15,7 @@
      */
 
     $blockIdentifier = 'atelier-' . $block::getBlockIdentifier();
+    $fragmentId = $block->getFragmentId();
 
     $columnClass = match ((string) ($columns ?? '3')) {
         '2'     => 'grid-cols-1 sm:grid-cols-2',
@@ -84,6 +85,7 @@ function galleryBlock(images, perPage) {
 
 <section
     class="{{ $blockIdentifier }} {{ $block->getWrapperClasses() }}"
+    @if($fragmentId) id="{{ $fragmentId }}" @endif
     data-block-type="{{ $block::getBlockIdentifier() }}"
     data-block-id="{{ $block->blockId ?? '' }}"
     x-data="galleryBlock({{ $imagesJson }}, {{ $perPageInt }})"
@@ -253,3 +255,18 @@ function galleryBlock(images, perPage) {
         />
     @endif
 </section>
+
+@once('atelier-scroll-to')
+    @if(config('atelier.features.scroll_navigation.enabled'))
+        @push('scripts')
+        <script>
+        window.scrollToEl = (selector) => {
+            const el = document.getElementById(selector)
+            if (!el) return
+            const y = el.getBoundingClientRect().top + window.scrollY - {{ (int) config('atelier.features.scroll_navigation.offset', 80) }}
+            window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+        </script>
+        @endpush
+    @endif
+@endonce
