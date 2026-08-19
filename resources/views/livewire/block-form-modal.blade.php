@@ -1,3 +1,4 @@
+<div>
 <x-filament::modal
     id="block-form-modal"
     :heading="$isPreview ? ($blockType ? $blockType::getLabel() . ' Preview' : 'Block Preview') : ($blockType ? $blockType::getLabel() : 'Block Form')"
@@ -55,3 +56,6 @@
         </div>
     @endif
 </x-filament::modal>
+
+<x-filament-actions::modals />
+</div>
