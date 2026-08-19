@@ -9,8 +9,8 @@ Atelier stores block data as polymorphic EAV (Entity-Attribute-Value) rows, keep
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11+
+- PHP 8.3+
+- Laravel 12+
 - FilamentPHP 5.0+
 
 ## Installation
@@ -763,6 +763,7 @@ At hydration time, the `AtelierBlock` model reconstructs the block instance, fil
 
 - [Block Configuration](docs/block-configuration.md) -- full field config and schema modification reference
 - [Block Templates](docs/block-templates.md) -- template structure, helper methods, scroll navigation, best practices
+- [Internal Links](docs/internal-links.md) -- RichEditor internal page linking with searchable model lookup
 - [Schema Generation](docs/schema.md) -- schema contracts, built-in contributions, custom block schemas
 
 ---
