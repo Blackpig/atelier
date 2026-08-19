@@ -5,6 +5,7 @@ namespace BlackpigCreatif\Atelier;
 use BlackpigCreatif\Atelier\Filament\Clusters\AtelierDocumentationCluster;
 use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
 use BlackpigCreatif\Atelier\Livewire\LocaleSelector;
+use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Support\Assets\Css;
@@ -14,6 +15,8 @@ use Livewire\Livewire;
 class AtelierPlugin implements Plugin
 {
     protected array $blockClasses = [];
+
+    protected ?Closure $internalLinksSearchCallback = null;
 
     protected static bool $hasRegisteredLivewireComponents = false;
 
@@ -40,6 +43,24 @@ class AtelierPlugin implements Plugin
         $this->blockClasses = $blockClasses;
 
         return $this;
+    }
+
+    /**
+     * Register a search callback for internal page linking in RichEditor fields.
+     * The callback receives a search string and should return [url => label] pairs.
+     *
+     * @param  Closure(string): array<string, string>  $searchCallback
+     */
+    public function internalLinks(Closure $searchCallback): static
+    {
+        $this->internalLinksSearchCallback = $searchCallback;
+
+        return $this;
+    }
+
+    public function getInternalLinksSearchCallback(): ?Closure
+    {
+        return $this->internalLinksSearchCallback;
     }
 
     public function getBlockClasses(): array

@@ -2,8 +2,12 @@
 
 namespace BlackpigCreatif\Atelier\Livewire;
 
+use BlackpigCreatif\Atelier\AtelierPlugin;
+use BlackpigCreatif\Atelier\Plugins\InternalLinkPlugin;
+use Closure;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -138,6 +142,12 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
         // STEP 7: Clear temporary configurations after schema is built
         \BlackpigCreatif\Atelier\Support\BlockFieldConfig::clearTemporary();
 
+        // STEP 8: Attach InternalLinkPlugin to RichEditors if configured
+        $internalLinksCallback = $this->getInternalLinksCallback();
+        if ($internalLinksCallback) {
+            $this->attachInternalLinksToRichEditors($schemaComponents, $internalLinksCallback);
+        }
+
         return $schema
             ->schema($schemaComponents)
             ->statePath('blockData');
@@ -231,6 +241,54 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
         return $components;
     }
 
+
+    protected function getInternalLinksCallback(): ?Closure
+    {
+        try {
+            return AtelierPlugin::get()->getInternalLinksSearchCallback();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Recursively find RichEditor instances and attach the InternalLinkPlugin.
+     */
+    protected function attachInternalLinksToRichEditors(array $components, Closure $callback): void
+    {
+        foreach ($components as $component) {
+            if (! ($component instanceof Component)) {
+                continue;
+            }
+
+            if ($component instanceof RichEditor) {
+                $component->plugins([
+                    InternalLinkPlugin::make($callback),
+                ]);
+
+                continue;
+            }
+
+            // Recurse into child components
+            if (property_exists($component, 'childComponents')) {
+                try {
+                    $reflection = new \ReflectionProperty($component, 'childComponents');
+                    $reflection->setAccessible(true);
+                    $childComponents = $reflection->getValue($component);
+
+                    if (is_array($childComponents)) {
+                        foreach ($childComponents as $children) {
+                            if (is_array($children)) {
+                                $this->attachInternalLinksToRichEditors($children, $callback);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Continue if we can't access the property
+                }
+            }
+        }
+    }
 
     public function open($componentStatePath, $blockType, $uuid = null, $data = [], $fieldConfigurations = []): void
     {
