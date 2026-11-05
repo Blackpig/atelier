@@ -6,8 +6,10 @@ use BlackpigCreatif\Atelier\Concerns\ConfiguresTranslatableFields;
 use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierBlockCommand;
 use BlackpigCreatif\Atelier\Console\Commands\MakeAtelierCollectionCommand;
 use BlackpigCreatif\Atelier\Contracts\BlockSchemaDriverInterface;
+use BlackpigCreatif\Atelier\Filament\Clusters\AtelierDocumentationCluster;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 use BlackpigCreatif\Atelier\Observers\AtelierBlockObserver;
+use BlackpigCreatif\Grimoire\Facades\Grimoire;
 use Illuminate\Support\Facades\Blade;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -45,6 +47,19 @@ class AtelierServiceProvider extends PackageServiceProvider
     {
         // Register observer
         AtelierBlock::observe(AtelierBlockObserver::class);
+
+        // Register the documentation Tome here rather than in AtelierPlugin::register(),
+        // which runs once per panel and would throw on the second panel.
+        if (class_exists(Grimoire::class)) {
+            Grimoire::registerTome(
+                id: 'atelier',
+                label: 'Block Builder',
+                icon: 'heroicon-o-squares-2x2',
+                path: dirname(__DIR__).'/resources/grimoire/atelier',
+                clusterClass: AtelierDocumentationCluster::class,
+                slug: 'atelier',
+            );
+        }
 
         // Register translatable macro for Filament fields
         ConfiguresTranslatableFields::configureTranslatableMacro();

@@ -2,9 +2,9 @@
 
 namespace BlackpigCreatif\Atelier;
 
-use BlackpigCreatif\Atelier\Filament\Clusters\AtelierDocumentationCluster;
 use BlackpigCreatif\Atelier\Livewire\BlockFormModal;
 use BlackpigCreatif\Atelier\Livewire\LocaleSelector;
+use BlackpigCreatif\Grimoire\Facades\Grimoire;
 use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -84,25 +84,16 @@ class AtelierPlugin implements Plugin
             static::$hasRegisteredLivewireComponents = true;
         }
 
-        // Register the Atelier user documentation Tome with Grimoire if it is installed.
-        if (class_exists(\BlackpigCreatif\Grimoire\Facades\Grimoire::class)) {
-            \BlackpigCreatif\Grimoire\Facades\Grimoire::registerTome(
-                id: 'atelier',
-                label: 'Block Builder',
-                icon: 'heroicon-o-squares-2x2',
-                path: dirname(__DIR__) . '/resources/grimoire/atelier',
-                clusterClass: AtelierDocumentationCluster::class,
-                slug: 'atelier',
-            );
-
-            // Discover the built-in Cluster and Chapter Page stubs from inside the package.
+        // Discover the built-in Cluster and Chapter Page stubs from inside the package.
+        // The Tome itself is registered once in AtelierServiceProvider; register() runs per panel.
+        if (class_exists(Grimoire::class)) {
             $panel->discoverClusters(
-                in: __DIR__ . '/Filament/Clusters',
+                in: __DIR__.'/Filament/Clusters',
                 for: 'BlackpigCreatif\\Atelier\\Filament\\Clusters',
             );
 
             $panel->discoverPages(
-                in: __DIR__ . '/Filament/Pages',
+                in: __DIR__.'/Filament/Pages',
                 for: 'BlackpigCreatif\\Atelier\\Filament\\Pages',
             );
         }
