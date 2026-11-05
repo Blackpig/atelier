@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier\Concerns;
 
+use BlackpigCreatif\Atelier\Blocks\HeroBlock;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
 
 trait HasAtelierMediaExtraction
@@ -13,15 +14,14 @@ trait HasAtelierMediaExtraction
      * block matching the specified type(s), then extracts and resolves the image
      * URL from the specified field using ChambreNoir media conversions.
      *
-     * @param string $fieldName Field name containing the image (e.g., 'background_image', 'image', 'thumbnail')
-     * @param string $conversion ChambreNoir conversion name (e.g., 'large', 'og', 'shop-panel')
-     * @param string|array $blockTypes Block class(es) to match (e.g., HeroBlock::class or [HeroBlock::class, ImageBlock::class])
+     * @param  string  $fieldName  Field name containing the image (e.g., 'background_image', 'image', 'thumbnail')
+     * @param  string  $conversion  ChambreNoir conversion name (e.g., 'large', 'og', 'shop-panel')
+     * @param  string|array  $blockTypes  Block class(es) to match (e.g., HeroBlock::class or [HeroBlock::class, ImageBlock::class])
      * @return string|null Resolved image URL or null if not found
      *
      * @example
      * // Get hero background image
      * $url = $page->getImageFromBlock('background_image', 'large', HeroBlock::class);
-     *
      * @example
      * // Get image from multiple possible block types
      * $url = $page->getImageFromBlock('image', 'thumbnail', [ImageBlock::class, GalleryBlock::class]);
@@ -74,7 +74,7 @@ trait HasAtelierMediaExtraction
     /**
      * Convenience method to get hero block background image
      *
-     * @param string $conversion ChambreNoir conversion name
+     * @param  string  $conversion  ChambreNoir conversion name
      * @return string|null Resolved image URL or null if not found
      */
     public function getHeroImageFromBlocks(string $conversion = 'large'): ?string
@@ -82,7 +82,7 @@ trait HasAtelierMediaExtraction
         return $this->getImageFromBlock(
             fieldName: 'background_image',
             conversion: $conversion,
-            blockTypes: \BlackpigCreatif\Atelier\Blocks\HeroBlock::class
+            blockTypes: HeroBlock::class
         );
     }
 
@@ -91,8 +91,8 @@ trait HasAtelierMediaExtraction
      *
      * Handles both simple string paths and ChambreNoir's JSON format with conversions.
      *
-     * @param mixed $media Media data (string path or ChambreNoir array)
-     * @param string $conversion Desired conversion name
+     * @param  mixed  $media  Media data (string path or ChambreNoir array)
+     * @param  string  $conversion  Desired conversion name
      * @return string|null Resolved URL or null
      */
     protected function resolveBlockMediaUrl(mixed $media, string $conversion): ?string

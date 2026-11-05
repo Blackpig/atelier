@@ -9,11 +9,13 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\EditorCommand;
 use Filament\Forms\Components\RichEditor\Plugins\Contracts\RichContentPlugin;
+use Filament\Forms\Components\RichEditor\RichEditorTool;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Enums\Width;
+use Tiptap\Core\Extension;
 
 class InternalLinkPlugin implements RichContentPlugin
 {
@@ -25,7 +27,7 @@ class InternalLinkPlugin implements RichContentPlugin
     }
 
     /**
-     * @return array<\Tiptap\Core\Extension>
+     * @return array<Extension>
      */
     public function getTipTapPhpExtensions(): array
     {
@@ -41,7 +43,7 @@ class InternalLinkPlugin implements RichContentPlugin
     }
 
     /**
-     * @return array<\Filament\Forms\Components\RichEditor\RichEditorTool>
+     * @return array<RichEditorTool>
      */
     public function getEditorTools(): array
     {

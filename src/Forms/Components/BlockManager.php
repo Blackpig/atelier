@@ -2,9 +2,16 @@
 
 namespace BlackpigCreatif\Atelier\Forms\Components;
 
+use BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection;
 use BlackpigCreatif\Atelier\Models\AtelierBlock;
+use BlackpigCreatif\ChambreNoir\Services\ImageCleanupService;
 use Closure;
 use Filament\Forms\Components\Field;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Facades\FilamentIcon;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Str;
 
 class BlockManager extends Field
@@ -83,7 +90,7 @@ class BlockManager extends Field
                 $reflection = new \ReflectionClass($block);
 
                 // If it's a BlockCollection, get its blocks
-                if ($reflection->isSubclassOf(\BlackpigCreatif\Atelier\Abstracts\BaseBlockCollection::class)) {
+                if ($reflection->isSubclassOf(BaseBlockCollection::class)) {
                     $collectionBlocks = $block::make();
                     $resolved = array_merge($resolved, $collectionBlocks);
 
@@ -102,14 +109,13 @@ class BlockManager extends Field
     /**
      * Configure a specific field in a block
      *
-     * @param string $blockClass The block class to configure
-     * @param string $fieldName The field name to modify
-     * @param array $config Configuration array (e.g., ['maxItems' => 1])
-     * @return static
+     * @param  string  $blockClass  The block class to configure
+     * @param  string  $fieldName  The field name to modify
+     * @param  array  $config  Configuration array (e.g., ['maxItems' => 1])
      */
     public function configureField(string $blockClass, string $fieldName, array $config): static
     {
-        $key = $blockClass . '::' . $fieldName;
+        $key = $blockClass.'::'.$fieldName;
         $this->fieldConfigurations[$key] = $config;
 
         return $this;
@@ -121,16 +127,12 @@ class BlockManager extends Field
      * Accepts either:
      * - Array of field configurations: ['fieldName' => ['config' => 'value']]
      * - Closure for full schema modification: fn($schema) => $modifiedSchema
-     *
-     * @param string $blockClass
-     * @param array|\Closure $configuration
-     * @return static
      */
-    public function configureBlock(string $blockClass, array|\Closure $configuration): static
+    public function configureBlock(string $blockClass, array|Closure $configuration): static
     {
-        if ($configuration instanceof \Closure) {
+        if ($configuration instanceof Closure) {
             // Schema modifier - store with special key
-            $key = $blockClass . '::__schema_modifier__';
+            $key = $blockClass.'::__schema_modifier__';
             $this->fieldConfigurations[$key] = $configuration;
         } else {
             // Array of field configs - register each one
@@ -150,8 +152,6 @@ class BlockManager extends Field
      *   'App\Blocks\HeroBlock' => ['ctas' => ['maxItems' => 2]],
      *   'App\Blocks\TextBlock' => ['heading' => ['maxLength' => 100]]
      * ]
-     *
-     * @return array
      */
     public function getFieldConfigurations(): array
     {
@@ -211,7 +211,7 @@ class BlockManager extends Field
     protected function getIconSvg(mixed $icon): ?string
     {
         // Handle HtmlString (custom SVG)
-        if ($icon instanceof \Illuminate\Contracts\Support\Htmlable) {
+        if ($icon instanceof Htmlable) {
             return $icon->toHtml();
         }
 
@@ -244,14 +244,14 @@ class BlockManager extends Field
     {
         try {
             // Use Filament's icon rendering
-            $iconHtml = \Filament\Support\Facades\FilamentIcon::resolve($icon);
+            $iconHtml = FilamentIcon::resolve($icon);
 
             if ($iconHtml) {
                 return $iconHtml;
             }
 
             // Fallback: Try to render using Blade
-            return \Illuminate\Support\Facades\Blade::render(
+            return Blade::render(
                 '<x-filament::icon :icon="$icon" class="w-6 h-6" />',
                 ['icon' => $icon]
             );
@@ -428,7 +428,7 @@ class BlockManager extends Field
             // Auto-detect if we're on a ViewRecord page and disable editing
             try {
                 $livewire = $component->getLivewire();
-                if ($livewire instanceof \Filament\Resources\Pages\ViewRecord) {
+                if ($livewire instanceof ViewRecord) {
                     $component->editable(false);
                     $component->deletable(false);
                     $component->addable(false);
@@ -689,7 +689,6 @@ class BlockManager extends Field
      * Scan block schema to find which fields are currently marked as translatable
      * This makes the schema the source of truth, not getTranslatableFields()
      *
-     * @param string $blockClass
      * @return array<int, string>
      */
     protected function getSchemaTranslatableFields(string $blockClass): array
@@ -711,10 +710,6 @@ class BlockManager extends Field
      *
      * Fields created with ->translatable() macro are Groups containing locale-specific fields
      * like "headline.en", "headline.fr". We detect these patterns to find translatable fields.
-     *
-     * @param array $components
-     * @param array &$translatableFields
-     * @return void
      */
     protected function scanSchemaForTranslatableFields(array $components, array &$translatableFields): void
     {
@@ -782,13 +777,12 @@ class BlockManager extends Field
     /**
      * Detect if a data key is a repeater field by analyzing structure
      *
-     * @param mixed $value
-     * @return bool
+     * @param  mixed  $value
      */
     protected function isRepeaterData($value): bool
     {
         // Must be an array
-        if (!is_array($value) || empty($value)) {
+        if (! is_array($value) || empty($value)) {
             return false;
         }
 
@@ -796,20 +790,20 @@ class BlockManager extends Field
         // This is the signature of repeater data
         $isNumericKeys = array_keys($value) === range(0, count($value) - 1);
 
-        if (!$isNumericKeys) {
+        if (! $isNumericKeys) {
             return false;
         }
 
         // Check first item - should be an associative array
         $firstItem = reset($value);
 
-        return is_array($firstItem) && !empty($firstItem) && array_keys($firstItem) !== range(0, count($firstItem) - 1);
+        return is_array($firstItem) && ! empty($firstItem) && array_keys($firstItem) !== range(0, count($firstItem) - 1);
     }
 
     /**
      * Detect which fields within repeater items are translatable
      *
-     * @param array $items Repeater items
+     * @param  array  $items  Repeater items
      * @return array<int, string>
      */
     protected function getRepeaterTranslatableFieldsFromData(array $items): array
@@ -836,8 +830,7 @@ class BlockManager extends Field
     /**
      * Extract and reconstruct repeater collection from EAV rows
      *
-     * @param \Illuminate\Support\Collection $attributes
-     * @return array
+     * @param  Collection  $attributes
      */
     protected function extractRepeaterCollection($attributes): array
     {
@@ -874,6 +867,7 @@ class BlockManager extends Field
 
         // Sort by index and reindex array
         ksort($items);
+
         return array_values($items);
     }
 
@@ -928,18 +922,18 @@ class BlockManager extends Field
         // ONLY clean up images that are being replaced or removed (not recreated with same data)
         $oldAttributes = $block->attributes()->get();
 
-        if (class_exists(\BlackpigCreatif\ChambreNoir\Services\ImageCleanupService::class)) {
-            $cleanupService = app(\BlackpigCreatif\ChambreNoir\Services\ImageCleanupService::class);
+        if (class_exists(ImageCleanupService::class)) {
+            $cleanupService = app(ImageCleanupService::class);
             $cleanedCount = 0;
 
             foreach ($oldAttributes as $attribute) {
                 // Check if this is a ChambreNoir image
-                if (!is_string($attribute->value)) {
+                if (! is_string($attribute->value)) {
                     continue;
                 }
 
                 $oldImageData = json_decode($attribute->value, true);
-                if (!is_array($oldImageData) || !isset($oldImageData['original'])) {
+                if (! is_array($oldImageData) || ! isset($oldImageData['original'])) {
                     continue;
                 }
 
@@ -955,6 +949,7 @@ class BlockManager extends Field
                         'key' => $attribute->key,
                         'original' => $oldImageData['original'],
                     ]);
+
                     continue;
                 }
 
@@ -1013,6 +1008,7 @@ class BlockManager extends Field
 
                 $count = $this->saveRepeaterCollection($block, $key, $value, $sortOrder);
                 $createdAttributesCount += $count;
+
                 continue;
             }
 
@@ -1058,10 +1054,6 @@ class BlockManager extends Field
     /**
      * Save repeater collection as EAV rows
      *
-     * @param AtelierBlock $block
-     * @param string $collectionName
-     * @param array $items
-     * @param int &$sortOrder
      * @return int Number of attributes created
      */
     protected function saveRepeaterCollection(

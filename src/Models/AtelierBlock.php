@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier\Models;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -74,9 +75,6 @@ class AtelierBlock extends Model
     /**
      * Get translatable fields for a block class
      * Tries schema scanning first (source of truth), falls back to getTranslatableFields() method
-     *
-     * @param string $class
-     * @return array
      */
     protected function getTranslatableFieldsForBlock(string $class): array
     {
@@ -94,9 +92,6 @@ class AtelierBlock extends Model
     /**
      * Scan block schema to find translatable fields
      * Note: This is primarily for admin/saving. Frontend uses getTranslatableFields() for performance.
-     *
-     * @param string $blockClass
-     * @return array
      */
     protected function scanSchemaForTranslatableFields(string $blockClass): array
     {
@@ -119,10 +114,6 @@ class AtelierBlock extends Model
 
     /**
      * Recursively scan schema components to find translatable fields
-     *
-     * @param array $components
-     * @param array &$translatableFields
-     * @return void
      */
     protected function recursiveScanForTranslatable(array $components, array &$translatableFields): void
     {
@@ -292,7 +283,7 @@ class AtelierBlock extends Model
      *
      * @param  string|null  $locale  Optional locale override
      */
-    public function render(?string $locale = null): \Illuminate\Contracts\View\View
+    public function render(?string $locale = null): View
     {
         $instance = $this->hydrateBlock($locale);
 
