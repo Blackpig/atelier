@@ -1,12 +1,21 @@
+# BPC canonical CI (maison/templates/package/workflows). Don't edit per package:
+# change the template and roll it out with /bpc-package-init.
+
 name: fix-code-style
 
 on:
   push:
+    # Branches only: tag pushes (releases) don't trigger it.
+    branches: ['**']
     paths:
       - '**.php'
 
 permissions:
   contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   fix-code-style:
@@ -18,6 +27,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.4'
+          coverage: none
+
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -26,16 +41,16 @@ jobs:
           restore-keys: |
             composer-cs-
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
-        with:
-          php-version: 8.4
-
       - name: Install dependencies
-        run: composer install --no-interaction --no-scripts
+        run: composer install --no-interaction --no-scripts --prefer-dist
 
       - name: Run Pint
-        run: ./vendor/bin/pint
+        run: |
+          if [ ! -x vendor/bin/pint ]; then
+            echo "::warning::laravel/pint is not in require-dev, so code style was not fixed. Add it: composer require --dev laravel/pint"
+            exit 0
+          fi
+          vendor/bin/pint
 
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0

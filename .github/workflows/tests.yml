@@ -1,3 +1,6 @@
+# BPC canonical CI (maison/templates/package/workflows). Don't edit per package:
+# change the template and roll it out with /bpc-package-init.
+
 name: tests
 
 on:
@@ -9,24 +12,54 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.4']
+        laravel: ['13.*', '12.*']
+        include:
+          - laravel: '13.*'
+            testbench: '11.*'
+          - laravel: '12.*'
+            testbench: '10.*'
+
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: shivammathur/setup-php@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
-          php-version: '8.4'
+          php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Configure Composer GitHub auth
-        run: composer config --global github-oauth.github.com "${{ secrets.COMPOSER_GITHUB_TOKEN }}"
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ matrix.laravel }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            composer-${{ matrix.laravel }}-
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --dev --no-interaction --no-update
+          composer update --prefer-dist --prefer-stable --no-interaction
 
       - name: Run tests
         run: vendor/bin/pest --no-coverage
+
+      - name: PhpStan
+        if: matrix.laravel == '13.*' && hashFiles('phpstan.neon.dist') != ''
+        run: vendor/bin/phpstan analyse --no-progress --error-format=github
