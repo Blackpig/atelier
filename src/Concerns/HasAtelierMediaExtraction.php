@@ -29,7 +29,7 @@ trait HasAtelierMediaExtraction
     public function getImageFromBlock(
         string $fieldName,
         string $conversion = 'large',
-        string|array $blockTypes = []
+        string | array $blockTypes = []
     ): ?string {
         // Check if model has blocks relationship
         if (! method_exists($this, 'blocks')) {

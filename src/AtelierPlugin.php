@@ -74,7 +74,7 @@ class AtelierPlugin implements Plugin
     {
         // Register Filament assets
         FilamentAsset::register([
-            Css::make('atelier-styles', __DIR__.'/../resources/dist/atelier.css'),
+            Css::make('atelier-styles', __DIR__ . '/../resources/dist/atelier.css'),
         ], package: 'blackpig-creatif/atelier');
 
         // Register Livewire components ONCE globally (with guard)
@@ -88,12 +88,12 @@ class AtelierPlugin implements Plugin
         // The Tome itself is registered once in AtelierServiceProvider; register() runs per panel.
         if (class_exists(Grimoire::class)) {
             $panel->discoverClusters(
-                in: __DIR__.'/Filament/Clusters',
+                in: __DIR__ . '/Filament/Clusters',
                 for: 'BlackpigCreatif\\Atelier\\Filament\\Clusters',
             );
 
             $panel->discoverPages(
-                in: __DIR__.'/Filament/Pages',
+                in: __DIR__ . '/Filament/Pages',
                 for: 'BlackpigCreatif\\Atelier\\Filament\\Pages',
             );
         }

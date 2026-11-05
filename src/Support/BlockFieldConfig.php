@@ -56,7 +56,7 @@ class BlockFieldConfig
     public static function getAllForBlock(string $blockClass): array
     {
         $blockConfigs = [];
-        $prefix = $blockClass.'::';
+        $prefix = $blockClass . '::';
         $prefixLength = strlen($prefix);
 
         foreach (static::$configurations as $key => $config) {
@@ -155,7 +155,7 @@ class BlockFieldConfig
      */
     protected static function makeKey(string $blockClass, string $fieldName): string
     {
-        return $blockClass.'::'.$fieldName;
+        return $blockClass . '::' . $fieldName;
     }
 
     // ========================================
@@ -166,7 +166,7 @@ class BlockFieldConfig
      * Remove field(s) from schema by name (recursive - searches nested components)
      * Modifies components in-place to avoid cloning issues
      */
-    public static function removeFields(array $schema, array|string $fieldNames): array
+    public static function removeFields(array $schema, array | string $fieldNames): array
     {
         $fieldsToRemove = is_array($fieldNames) ? $fieldNames : [$fieldNames];
 
@@ -305,6 +305,7 @@ class BlockFieldConfig
                     if ($inserted) {
                         $childComponents[$key] = $children;
                         $reflection->setValue($component, $childComponents);
+
                         break;
                     }
                 }

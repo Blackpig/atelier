@@ -35,7 +35,7 @@ abstract class BaseBlock implements HasCompositeSchema, HasSchemaContribution, H
         return null;
     }
 
-    public static function getIcon(): string|IconSize|Htmlable|null
+    public static function getIcon(): string | IconSize | Htmlable | null
     {
         return 'heroicon-o-square-3-stack-3d';
     }
@@ -47,7 +47,7 @@ abstract class BaseBlock implements HasCompositeSchema, HasSchemaContribution, H
 
     public static function getViewPath(): string
     {
-        return 'atelier::blocks.'.static::getBlockIdentifier();
+        return 'atelier::blocks.' . static::getBlockIdentifier();
     }
 
     // Override to specify translatable fields

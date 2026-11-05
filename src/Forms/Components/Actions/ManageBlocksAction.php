@@ -79,6 +79,7 @@ class ManageBlocksAction extends Action
                 foreach ($blocks as $block) {
                     if (($block['uuid'] ?? null) === $uuid) {
                         $blockData = $block;
+
                         break;
                     }
                 }
@@ -103,6 +104,7 @@ class ManageBlocksAction extends Action
                 foreach ($blocks as $index => $block) {
                     if (($block['uuid'] ?? null) === $uuid) {
                         $blocks[$index]['data'] = $data;
+
                         break;
                     }
                 }

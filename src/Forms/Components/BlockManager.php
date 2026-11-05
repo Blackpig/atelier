@@ -18,17 +18,17 @@ class BlockManager extends Field
 {
     protected string $view = 'atelier::forms.components.block-manager';
 
-    protected array|string|Closure $blockClasses = [];
+    protected array | string | Closure $blockClasses = [];
 
-    protected bool|Closure $isAddable = true;
+    protected bool | Closure $isAddable = true;
 
-    protected bool|Closure $isEditable = true;
+    protected bool | Closure $isEditable = true;
 
-    protected bool|Closure $isDeletable = true;
+    protected bool | Closure $isDeletable = true;
 
-    protected bool|Closure $isReorderable = true;
+    protected bool | Closure $isReorderable = true;
 
-    protected bool|Closure $isCollapsible = false;
+    protected bool | Closure $isCollapsible = false;
 
     protected ?string $addButtonLabel = null;
 
@@ -45,7 +45,7 @@ class BlockManager extends Field
      * - Closure returning array: fn() => [...]
      * - Empty/not set: Falls back to config('atelier.blocks')
      */
-    public function blocks(array|string|Closure $blockClasses = []): static
+    public function blocks(array | string | Closure $blockClasses = []): static
     {
         $this->blockClasses = $blockClasses;
 
@@ -115,7 +115,7 @@ class BlockManager extends Field
      */
     public function configureField(string $blockClass, string $fieldName, array $config): static
     {
-        $key = $blockClass.'::'.$fieldName;
+        $key = $blockClass . '::' . $fieldName;
         $this->fieldConfigurations[$key] = $config;
 
         return $this;
@@ -128,11 +128,11 @@ class BlockManager extends Field
      * - Array of field configurations: ['fieldName' => ['config' => 'value']]
      * - Closure for full schema modification: fn($schema) => $modifiedSchema
      */
-    public function configureBlock(string $blockClass, array|Closure $configuration): static
+    public function configureBlock(string $blockClass, array | Closure $configuration): static
     {
         if ($configuration instanceof Closure) {
             // Schema modifier - store with special key
-            $key = $blockClass.'::__schema_modifier__';
+            $key = $blockClass . '::__schema_modifier__';
             $this->fieldConfigurations[$key] = $configuration;
         } else {
             // Array of field configs - register each one
@@ -220,7 +220,7 @@ class BlockManager extends Field
             // Check if it's an Atelier custom icon
             if (str_starts_with($icon, 'atelier.icons.')) {
                 $iconName = str_replace('atelier.icons.', '', $icon);
-                $iconPath = __DIR__.'/../../../resources/views/components/icons/'.$iconName.'.blade.php';
+                $iconPath = __DIR__ . '/../../../resources/views/components/icons/' . $iconName . '.blade.php';
 
                 if (file_exists($iconPath)) {
                     return file_get_contents($iconPath);
@@ -268,7 +268,7 @@ class BlockManager extends Field
     /**
      * Configure addability
      */
-    public function addable(bool|Closure $condition = true): static
+    public function addable(bool | Closure $condition = true): static
     {
         $this->isAddable = $condition;
 
@@ -283,7 +283,7 @@ class BlockManager extends Field
     /**
      * Configure editability
      */
-    public function editable(bool|Closure $condition = true): static
+    public function editable(bool | Closure $condition = true): static
     {
         $this->isEditable = $condition;
 
@@ -298,7 +298,7 @@ class BlockManager extends Field
     /**
      * Configure deletability
      */
-    public function deletable(bool|Closure $condition = true): static
+    public function deletable(bool | Closure $condition = true): static
     {
         $this->isDeletable = $condition;
 
@@ -313,7 +313,7 @@ class BlockManager extends Field
     /**
      * Configure reorderability
      */
-    public function reorderable(bool|Closure $condition = true): static
+    public function reorderable(bool | Closure $condition = true): static
     {
         $this->isReorderable = $condition;
 
@@ -328,7 +328,7 @@ class BlockManager extends Field
     /**
      * Configure collapsibility
      */
-    public function collapsible(bool|Closure $condition = true): static
+    public function collapsible(bool | Closure $condition = true): static
     {
         $this->isCollapsible = $condition;
 
@@ -346,7 +346,7 @@ class BlockManager extends Field
      * Accepts a boolean or a Closure for dynamic authorization.
      * When false, the edit (pencil) icon is hidden.
      */
-    public function canEditBlock(bool|Closure $condition = true): static
+    public function canEditBlock(bool | Closure $condition = true): static
     {
         $this->isEditable = $condition;
 
@@ -360,7 +360,7 @@ class BlockManager extends Field
      * The Closure receives the current record and Livewire component via Filament's
      * evaluate context, e.g. fn ($record) => $record->isOwnedBy(auth()->user())
      */
-    public function canCreateBlock(bool|Closure $condition = true): static
+    public function canCreateBlock(bool | Closure $condition = true): static
     {
         $this->isAddable = $condition;
 
@@ -373,7 +373,7 @@ class BlockManager extends Field
      * Accepts a boolean or a Closure for dynamic authorization.
      * When false, the drag handle is hidden and sorting is disabled.
      */
-    public function canReorderBlocks(bool|Closure $condition = true): static
+    public function canReorderBlocks(bool | Closure $condition = true): static
     {
         $this->isReorderable = $condition;
 
@@ -386,7 +386,7 @@ class BlockManager extends Field
      * Accepts a boolean or a Closure for dynamic authorization.
      * When false, the delete icon is hidden including during hover state.
      */
-    public function canDeleteBlock(bool|Closure $condition = true): static
+    public function canDeleteBlock(bool | Closure $condition = true): static
     {
         $this->isDeletable = $condition;
 
@@ -574,6 +574,7 @@ class BlockManager extends Field
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString(),
                     ]);
+
                     throw $e;
                 }
             }
@@ -1210,6 +1211,7 @@ class BlockManager extends Field
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             throw $e;
         }
     }

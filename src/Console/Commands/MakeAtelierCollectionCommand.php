@@ -38,7 +38,7 @@ class MakeAtelierCollectionCommand extends Command
             mkdir($path, 0755, true);
         }
 
-        $filePath = $path.'/'.$name.'.php';
+        $filePath = $path . '/' . $name . '.php';
 
         // Check if file already exists
         if (file_exists($filePath)) {
@@ -61,7 +61,7 @@ class MakeAtelierCollectionCommand extends Command
         $this->newLine();
         $this->comment('Next steps:');
         $this->comment('1. Add block classes to the getBlocks() method');
-        $this->comment('2. Use the collection: BlockManager::make(\'blocks\')->blocks('.$name.'::class)');
+        $this->comment('2. Use the collection: BlockManager::make(\'blocks\')->blocks(' . $name . '::class)');
 
         return self::SUCCESS;
     }

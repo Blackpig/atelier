@@ -73,7 +73,8 @@ trait HasCallToActions
             ->columns(2)
             ->reorderable()
             ->collapsible()
-            ->itemLabel(fn (?array $state): string => static::getRepeaterItemLabel($state)
+            ->itemLabel(
+                fn (?array $state): string => static::getRepeaterItemLabel($state)
             )
             ->addActionLabel('Add Call to Action')
             ->columnSpanFull()
@@ -160,7 +161,7 @@ trait HasCallToActions
      *
      * @param  string|array  $cta  CTA array or style key
      */
-    public function getCallToActionStyleClass(string|array $cta): string
+    public function getCallToActionStyleClass(string | array $cta): string
     {
         $styleKey = is_array($cta) ? ($cta['style'] ?? 'primary') : $cta;
 

@@ -36,7 +36,7 @@ trait HasDivider
         // Extract just the background color part and convert to text color
         // e.g., "bg-white" -> "text-white", "bg-primary-500 text-white" -> "text-primary-500"
         if (preg_match('/bg-([^\s]+)/', $bgClass, $matches)) {
-            return 'text-'.$matches[1];
+            return 'text-' . $matches[1];
         }
 
         return 'text-white';

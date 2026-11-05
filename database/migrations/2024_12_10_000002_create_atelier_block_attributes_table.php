@@ -10,7 +10,7 @@ return new class extends Migration
     {
         $tableName = config('atelier.table_prefix', 'atelier_') . 'block_attributes';
         $blocksTable = config('atelier.table_prefix', 'atelier_') . 'blocks';
-        
+
         Schema::create($tableName, function (Blueprint $table) use ($blocksTable) {
             $table->id();
             $table->foreignId('block_id')
@@ -23,12 +23,12 @@ return new class extends Migration
             $table->boolean('translatable')->default(false);
             $table->integer('sort_order')->default(0);
             $table->timestamps();
-            
+
             $table->index(['block_id', 'key', 'locale'], 'atelier_attrs_block_key_locale_index');
             $table->index(['block_id', 'translatable'], 'atelier_attrs_block_translatable_index');
         });
     }
-    
+
     public function down(): void
     {
         Schema::dropIfExists(config('atelier.table_prefix', 'atelier_') . 'block_attributes');

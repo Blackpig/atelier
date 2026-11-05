@@ -29,7 +29,7 @@ class AtelierBlock extends Model
     {
         parent::__construct($attributes);
 
-        $this->table = config('atelier.table_prefix', 'atelier_').'blocks';
+        $this->table = config('atelier.table_prefix', 'atelier_') . 'blocks';
     }
 
     protected static function booted(): void
@@ -266,7 +266,7 @@ class AtelierBlock extends Model
 
     private function getCacheKey(string $locale): string
     {
-        return config('atelier.cache.prefix')."{$this->id}_{$locale}";
+        return config('atelier.cache.prefix') . "{$this->id}_{$locale}";
     }
 
     public function clearCache(): void

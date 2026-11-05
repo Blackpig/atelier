@@ -16,11 +16,11 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->boolean('is_published')->default(true);
             $table->timestamps();
-            
+
             $table->index(['blockable_type', 'blockable_id', 'position'], 'atelier_blocks_blockable_position_index');
         });
     }
-    
+
     public function down(): void
     {
         Schema::dropIfExists(config('atelier.table_prefix', 'atelier_') . 'blocks');

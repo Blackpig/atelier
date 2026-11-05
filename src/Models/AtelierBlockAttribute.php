@@ -29,7 +29,7 @@ class AtelierBlockAttribute extends Model
     {
         parent::__construct($attributes);
 
-        $this->table = config('atelier.table_prefix', 'atelier_').'block_attributes';
+        $this->table = config('atelier.table_prefix', 'atelier_') . 'block_attributes';
     }
 
     public function block(): BelongsTo

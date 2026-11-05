@@ -159,7 +159,7 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
      */
     protected function getResourceSchemaModifier(): ?Closure
     {
-        $key = $this->blockType.'::__schema_modifier__';
+        $key = $this->blockType . '::__schema_modifier__';
 
         if (isset($this->fieldConfigurations[$key]) && $this->fieldConfigurations[$key] instanceof Closure) {
             return $this->fieldConfigurations[$key];
@@ -355,7 +355,8 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
             }
 
             // Dispatch event to parent component with the saved data
-            $this->dispatch('block-form-saved',
+            $this->dispatch(
+                'block-form-saved',
                 uuid: $this->uuid,
                 type: $this->blockType,
                 data: $data,
@@ -503,7 +504,7 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return '<div class="text-red-600 p-4">Error generating preview: '.htmlspecialchars($e->getMessage()).'</div>';
+            return '<div class="text-red-600 p-4">Error generating preview: ' . htmlspecialchars($e->getMessage()) . '</div>';
         }
     }
 

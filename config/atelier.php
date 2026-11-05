@@ -1,5 +1,7 @@
 <?php
 
+use BlackpigCreatif\Atelier\Blocks\VideoBlock;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -53,7 +55,7 @@ return [
         \BlackpigCreatif\Atelier\Blocks\TextWithTwoImagesBlock::class,
         \BlackpigCreatif\Atelier\Blocks\GalleryBlock::class,
         \BlackpigCreatif\Atelier\Blocks\CarouselBlock::class, */
-        \BlackpigCreatif\Atelier\Blocks\VideoBlock::class,
+        VideoBlock::class,
         // Add custom blocks here:
         // \App\Blocks\CustomBlock::class,
     ],

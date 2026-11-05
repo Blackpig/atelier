@@ -28,10 +28,10 @@ trait ConfiguresTranslatableFields
                 $localeField = clone $originalField;
 
                 // Update the field name to include locale: headline.en, headline.fr
-                $localeField->statePath($fieldName.'.'.$locale);
+                $localeField->statePath($fieldName . '.' . $locale);
 
                 // Add visual indicator with icon and locale badge
-                $localeField->hint('['.strtoupper($locale).']');
+                $localeField->hint('[' . strtoupper($locale) . ']');
                 $localeField->hintIcon('heroicon-m-globe-alt');
                 $localeField->hintColor('primary');
                 $localeField->extraInputAttributes([
@@ -61,7 +61,7 @@ trait ConfiguresTranslatableFields
                 ->key($fieldName)
                 ->extraAttributes(function () use ($defaultLocale) {
                     return [
-                        'x-data' => "{ currentLocale: '".session('atelier.current_locale', $defaultLocale)."' }",
+                        'x-data' => "{ currentLocale: '" . session('atelier.current_locale', $defaultLocale) . "' }",
                         'x-on:locale-changed.window' => 'currentLocale = $event.detail.locale',
                     ];
                 })

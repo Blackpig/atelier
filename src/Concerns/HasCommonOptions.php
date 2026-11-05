@@ -8,7 +8,10 @@ use Filament\Schemas\Components\Section;
 
 trait HasCommonOptions
 {
-    use HasBackground, HasDivider, HasSpacing, HasWidth;
+    use HasBackground;
+    use HasDivider;
+    use HasSpacing;
+    use HasWidth;
 
     /**
      * Get the Published toggle field (appears first in schema)

@@ -55,7 +55,7 @@ class AtelierServiceProvider extends PackageServiceProvider
                 id: 'atelier',
                 label: 'Block Builder',
                 icon: 'heroicon-o-squares-2x2',
-                path: dirname(__DIR__).'/resources/grimoire/atelier',
+                path: dirname(__DIR__) . '/resources/grimoire/atelier',
                 clusterClass: AtelierDocumentationCluster::class,
                 slug: 'atelier',
             );
@@ -66,7 +66,7 @@ class AtelierServiceProvider extends PackageServiceProvider
 
         // Register Blade components for icons
         Blade::anonymousComponentPath(
-            __DIR__.'/../resources/views/components/icons',
+            __DIR__ . '/../resources/views/components/icons',
             'atelier.icons'
         );
 
@@ -79,18 +79,18 @@ class AtelierServiceProvider extends PackageServiceProvider
         if ($this->app->runningInConsole()) {
             // Publish BLOCK TEMPLATES for designers to customize
             $this->publishes([
-                __DIR__.'/../resources/views/blocks' => resource_path('views/vendor/atelier/blocks'),
+                __DIR__ . '/../resources/views/blocks' => resource_path('views/vendor/atelier/blocks'),
             ], 'atelier-block-templates');
 
             // Publish DIVIDER COMPONENTS (visual elements users might want to customize)
             $this->publishes([
-                __DIR__.'/../resources/views/components/dividers' => resource_path('views/vendor/atelier/components/dividers'),
+                __DIR__ . '/../resources/views/components/dividers' => resource_path('views/vendor/atelier/components/dividers'),
             ], 'atelier-dividers');
 
             // Publish ALL views (use sparingly - for advanced customization only)
             // WARNING: Publishing form components may cause issues with package updates
             $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/atelier'),
+                __DIR__ . '/../resources/views' => resource_path('views/vendor/atelier'),
             ], 'atelier-views-all');
         }
     }
