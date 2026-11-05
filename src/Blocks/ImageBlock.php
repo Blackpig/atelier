@@ -13,10 +13,12 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Illuminate\Contracts\View\View;
+
 class ImageBlock extends BaseBlock
 {
-    use HasRetouchMedia;
     use HasCallToActions;
+    use HasRetouchMedia;
+
     public static function getLabel(): string
     {
         return 'Image';
@@ -66,12 +68,12 @@ class ImageBlock extends BaseBlock
                         ->translatable(),
                 ])
                 ->collapsible(),
-            
+
             Section::make('Call to Action')
                 ->schema([
-                    static::getCallToActionsField()
-            ])
-            ->collapsible(),
+                    static::getCallToActionsField(),
+                ])
+                ->collapsible(),
 
             Section::make('Layout')
                 ->schema([

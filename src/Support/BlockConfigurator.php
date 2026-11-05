@@ -17,7 +17,7 @@ class BlockConfigurator
      */
     public static function for(string $blockClass): static
     {
-        $instance = new static();
+        $instance = new static;
         $instance->blockClass = $blockClass;
 
         return $instance;
@@ -27,9 +27,7 @@ class BlockConfigurator
      * Configure a field using actual component method names
      * This is the primary API - calls real Filament component methods
      *
-     * @param string $fieldName
-     * @param array $config ['methodName' => $value] - e.g., ['options' => [...], 'default' => '1']
-     * @return static
+     * @param  array  $config  ['methodName' => $value] - e.g., ['options' => [...], 'default' => '1']
      *
      * @example
      * ->configure('columns', [
@@ -57,9 +55,6 @@ class BlockConfigurator
     /**
      * Hide one or more fields (sets visible to false)
      * Convenience method for better readability
-     *
-     * @param string ...$fieldNames
-     * @return static
      */
     public function hide(string ...$fieldNames): static
     {
@@ -73,9 +68,6 @@ class BlockConfigurator
     /**
      * Show one or more fields (sets visible to true)
      * Convenience method for better readability
-     *
-     * @param string ...$fieldNames
-     * @return static
      */
     public function show(string ...$fieldNames): static
     {
@@ -89,9 +81,6 @@ class BlockConfigurator
     /**
      * Remove one or more fields entirely from the block schema.
      * This is different from hide() - it completely removes fields from the schema.
-     *
-     * @param string ...$fieldNames
-     * @return static
      */
     public function remove(string ...$fieldNames): static
     {
@@ -106,9 +95,6 @@ class BlockConfigurator
 
     /**
      * Remove one or more container sections by their heading label.
-     *
-     * @param string ...$headings
-     * @return static
      */
     public function removeSection(string ...$headings): static
     {
@@ -124,9 +110,6 @@ class BlockConfigurator
     /**
      * Make one or more fields required
      * Convenience method for better readability
-     *
-     * @param string ...$fieldNames
-     * @return static
      */
     public function require(string ...$fieldNames): static
     {
@@ -140,9 +123,6 @@ class BlockConfigurator
     /**
      * Make one or more fields optional
      * Convenience method for better readability
-     *
-     * @param string ...$fieldNames
-     * @return static
      */
     public function optional(string ...$fieldNames): static
     {
@@ -157,8 +137,7 @@ class BlockConfigurator
      * Add a custom schema modifier closure
      * This allows full control over the schema array
      *
-     * @param Closure $modifier fn($schema) => $modifiedSchema
-     * @return static
+     * @param  Closure  $modifier  fn($schema) => $modifiedSchema
      */
     public function modifySchema(Closure $modifier): static
     {
@@ -168,6 +147,7 @@ class BlockConfigurator
             // Chain modifiers if one already exists
             $this->schemaModifier = function ($schema) use ($existingModifier, $modifier) {
                 $schema = $existingModifier($schema);
+
                 return $modifier($schema);
             };
         } else {
@@ -179,10 +159,6 @@ class BlockConfigurator
 
     /**
      * Insert fields before a specific field
-     *
-     * @param string $beforeFieldName
-     * @param array $fields
-     * @return static
      */
     public function insertBefore(string $beforeFieldName, array $fields): static
     {
@@ -193,10 +169,6 @@ class BlockConfigurator
 
     /**
      * Insert fields after a specific field
-     *
-     * @param string $afterFieldName
-     * @param array $fields
-     * @return static
      */
     public function insertAfter(string $afterFieldName, array $fields): static
     {
@@ -207,9 +179,6 @@ class BlockConfigurator
 
     /**
      * Add fields to the end of the schema
-     *
-     * @param array $fields
-     * @return static
      */
     public function addFields(array $fields): static
     {
@@ -220,9 +189,6 @@ class BlockConfigurator
 
     /**
      * Add fields to the beginning of the schema
-     *
-     * @param array $fields
-     * @return static
      */
     public function prependFields(array $fields): static
     {
@@ -255,10 +221,6 @@ class BlockConfigurator
     /**
      * Static helper to configure and apply in one call
      * Useful when you want immediate application
-     *
-     * @param string $blockClass
-     * @param Closure $callback
-     * @return void
      */
     public static function configureUsing(string $blockClass, Closure $callback): void
     {

@@ -4,6 +4,7 @@ namespace BlackpigCreatif\Atelier\Livewire;
 
 use BlackpigCreatif\Atelier\AtelierPlugin;
 use BlackpigCreatif\Atelier\Plugins\InternalLinkPlugin;
+use BlackpigCreatif\Atelier\Support\BlockFieldConfig;
 use Closure;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -73,7 +74,7 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
         $schemaComponents = $this->blockType::getSchema();
 
         // STEP 2: Apply global schema modifiers (from service provider)
-        foreach (\BlackpigCreatif\Atelier\Support\BlockFieldConfig::getSchemaModifiers($this->blockType) as $modifier) {
+        foreach (BlockFieldConfig::getSchemaModifiers($this->blockType) as $modifier) {
             $schemaComponents = $modifier($schemaComponents);
         }
 
@@ -103,7 +104,7 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
                     $fieldName = $key;
                 }
 
-                \BlackpigCreatif\Atelier\Support\BlockFieldConfig::registerTemporary(
+                BlockFieldConfig::registerTemporary(
                     $this->blockType,
                     $fieldName,
                     $config
@@ -113,10 +114,10 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
 
         // STEP 6: Apply field configurations to schema components
         // Merge global configs with per-resource configs (per-resource overrides global)
-        $globalConfigs = \BlackpigCreatif\Atelier\Support\BlockFieldConfig::getAllForBlock($this->blockType);
+        $globalConfigs = BlockFieldConfig::getAllForBlock($this->blockType);
         $resourceConfigs = array_filter(
             $this->fieldConfigurations,
-            fn($key) => !str_contains($key, '::__schema_modifier__'),
+            fn ($key) => ! str_contains($key, '::__schema_modifier__'),
             ARRAY_FILTER_USE_KEY
         );
 
@@ -140,7 +141,7 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
         }
 
         // STEP 7: Clear temporary configurations after schema is built
-        \BlackpigCreatif\Atelier\Support\BlockFieldConfig::clearTemporary();
+        BlockFieldConfig::clearTemporary();
 
         // STEP 8: Attach InternalLinkPlugin to RichEditors if configured
         $internalLinksCallback = $this->getInternalLinksCallback();
@@ -155,14 +156,12 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
 
     /**
      * Get per-resource schema modifier for current block
-     *
-     * @return \Closure|null
      */
-    protected function getResourceSchemaModifier(): ?\Closure
+    protected function getResourceSchemaModifier(): ?Closure
     {
-        $key = $this->blockType . '::__schema_modifier__';
+        $key = $this->blockType.'::__schema_modifier__';
 
-        if (isset($this->fieldConfigurations[$key]) && $this->fieldConfigurations[$key] instanceof \Closure) {
+        if (isset($this->fieldConfigurations[$key]) && $this->fieldConfigurations[$key] instanceof Closure) {
             return $this->fieldConfigurations[$key];
         }
 
@@ -177,12 +176,12 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
     protected function registerGlobalConfigurationsForBlock(string $blockType): void
     {
         // Get all global configurations for this block type
-        $globalConfigs = \BlackpigCreatif\Atelier\Support\BlockFieldConfig::getAllForBlock($blockType);
+        $globalConfigs = BlockFieldConfig::getAllForBlock($blockType);
 
         // Register each global config as temporary
         // Per-resource configs will override these when registered afterwards
         foreach ($globalConfigs as $fieldName => $config) {
-            \BlackpigCreatif\Atelier\Support\BlockFieldConfig::registerTemporary(
+            BlockFieldConfig::registerTemporary(
                 $blockType,
                 $fieldName,
                 $config
@@ -240,7 +239,6 @@ class BlockFormModal extends LivewireComponent implements HasActions, HasForms
 
         return $components;
     }
-
 
     protected function getInternalLinksCallback(): ?Closure
     {

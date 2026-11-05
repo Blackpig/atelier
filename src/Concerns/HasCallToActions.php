@@ -2,6 +2,7 @@
 
 namespace BlackpigCreatif\Atelier\Concerns;
 
+use BlackpigCreatif\Atelier\Support\BlockFieldConfig;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -11,8 +12,6 @@ trait HasCallToActions
 {
     /**
      * Get the CallToActions Repeater field
-     *
-     * @return Repeater
      */
     public static function getCallToActionsField(): Repeater
     {
@@ -74,17 +73,16 @@ trait HasCallToActions
             ->columns(2)
             ->reorderable()
             ->collapsible()
-            ->itemLabel(fn (?array $state): string =>
-                static::getRepeaterItemLabel($state)
+            ->itemLabel(fn (?array $state): string => static::getRepeaterItemLabel($state)
             )
             ->addActionLabel('Add Call to Action')
             ->columnSpanFull()
             ->defaultItems(0);
 
         // Apply any field configurations from global registry
-        $fieldConfig = \BlackpigCreatif\Atelier\Support\BlockFieldConfig::get(static::class, 'ctas');
+        $fieldConfig = BlockFieldConfig::get(static::class, 'ctas');
 
-        if (!empty($fieldConfig)) {
+        if (! empty($fieldConfig)) {
             foreach ($fieldConfig as $method => $value) {
                 if (method_exists($field, $method)) {
                     $field = $field->{$method}($value);
@@ -97,13 +95,10 @@ trait HasCallToActions
 
     /**
      * Get label for repeater item (handles translatable fields)
-     *
-     * @param array|null $state
-     * @return string
      */
     protected static function getRepeaterItemLabel(?array $state): string
     {
-        if (!$state || !isset($state['label'])) {
+        if (! $state || ! isset($state['label'])) {
             return 'Call to Action';
         }
 
@@ -127,8 +122,6 @@ trait HasCallToActions
 
     /**
      * Get all CTAs for this block
-     *
-     * @return array
      */
     public function getCallToActions(): array
     {
@@ -137,21 +130,16 @@ trait HasCallToActions
 
     /**
      * Check if block has any CTAs
-     *
-     * @return bool
      */
     public function hasCallToActions(): bool
     {
         $ctas = $this->getCallToActions();
-        return !empty($ctas) && is_array($ctas);
+
+        return ! empty($ctas) && is_array($ctas);
     }
 
     /**
      * Get translated label for a CTA
-     *
-     * @param array $cta
-     * @param string|null $locale
-     * @return string
      */
     public function getCallToActionLabel(array $cta, ?string $locale = null): string
     {
@@ -170,8 +158,7 @@ trait HasCallToActions
     /**
      * Get CSS class for a CTA based on style selection
      *
-     * @param string|array $cta CTA array or style key
-     * @return string
+     * @param  string|array  $cta  CTA array or style key
      */
     public function getCallToActionStyleClass(string|array $cta): string
     {
@@ -182,9 +169,6 @@ trait HasCallToActions
 
     /**
      * Get target attribute for a CTA
-     *
-     * @param array $cta
-     * @return string
      */
     public function getCallToActionTarget(array $cta): string
     {
@@ -193,9 +177,6 @@ trait HasCallToActions
 
     /**
      * Check if URL is external
-     *
-     * @param string $url
-     * @return bool
      */
     public function isExternalUrl(string $url): bool
     {

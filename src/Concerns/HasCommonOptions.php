@@ -102,7 +102,7 @@ trait HasCommonOptions
                     ->schema($displayFields)
                     ->columns(3)
                     ->collapsed()
-                    ->collapsible()
+                    ->collapsible(),
             ];
         }
 
